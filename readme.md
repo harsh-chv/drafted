@@ -78,9 +78,21 @@ python manage.py test
 
 1. Push the project to GitHub.
 2. Create a Railway project from the GitHub repository.
-3. Add a MySQL service.
-4. Configure environment variables.
-5. Run migrations after deployment.
+3. Configure environment variables.
+4. Optional: add a Railway MySQL/Postgres service and set its `DATABASE_URL`.
+5. Deploy. The `Procfile` runs migrations before starting Gunicorn.
+
+Recommended Railway variables:
+
+- `SECRET_KEY`
+- `DEBUG=False`
+- `ALLOWED_HOSTS=.railway.app,your-custom-domain.com`
+- `CSRF_TRUSTED_ORIGINS=https://your-app.up.railway.app`
+- `DATABASE_URL` if using Railway MySQL/Postgres
+- `EMAIL_HOST_USER`
+- `EMAIL_HOST_PASSWORD`
+- `GOOGLE_CLIENT_ID`
+- `GOOGLE_CLIENT_SECRET`
 
 ## Notes
 

@@ -46,6 +46,10 @@ CSRF_TRUSTED_ORIGINS = [
     if o.strip()
 ]
 
+railway_domain = os.environ.get('RAILWAY_PUBLIC_DOMAIN')
+if railway_domain:
+    CSRF_TRUSTED_ORIGINS.append(f'https://{railway_domain}')
+
 # ──────────────────────────────────────────────
 # Application definition
 # ──────────────────────────────────────────────
@@ -102,16 +106,37 @@ TEMPLATES = [
 WSGI_APPLICATION = 'drafted.wsgi.application'
 
 # ──────────────────────────────────────────────
-# Database — MySQL (with DATABASE_URL fallback for Railway)
+# Database — MySQL (with Railway env var support)
 # ──────────────────────────────────────────────
 import dj_database_url
 
+DATABASE_URL = (
+    os.environ.get('DATABASE_URL') or
+    os.environ.get('MYSQL_URL') or
+    os.environ.get('MYSQLPRIVATE_URL') or
+    os.environ.get('MYSQLPUBLIC_URL')
+)
+
+# If DATABASE_URL is pointing to local 127.0.0.1 on Railway, fallback to Railway MySQL vars
+if os.environ.get('RAILWAY_ENVIRONMENT') and DATABASE_URL and '127.0.0.1' in DATABASE_URL:
+    DATABASE_URL = (
+        os.environ.get('MYSQL_URL') or
+        os.environ.get('MYSQLPRIVATE_URL') or
+        os.environ.get('MYSQLPUBLIC_URL')
+    )
+
+# Build connection string if individual Railway MySQL variables exist
+if not DATABASE_URL and os.environ.get('MYSQLHOST'):
+    mysql_user = os.environ.get('MYSQLUSER', 'root')
+    mysql_pass = os.environ.get('MYSQLPASSWORD', '')
+    mysql_host = os.environ.get('MYSQLHOST', 'localhost')
+    mysql_port = os.environ.get('MYSQLPORT', '3306')
+    mysql_db = os.environ.get('MYSQLDATABASE') or os.environ.get('MYSQL_DATABASE', 'railway')
+    DATABASE_URL = f"mysql://{mysql_user}:{mysql_pass}@{mysql_host}:{mysql_port}/{mysql_db}"
+
 DATABASES = {
     'default': dj_database_url.config(
-        default=os.environ.get(
-            'DATABASE_URL',
-            'mysql://root:@127.0.0.1:3306/drafted_db'
-        ),
+        default=DATABASE_URL or f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
         conn_max_age=600,
         conn_health_checks=True,
     )
