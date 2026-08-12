@@ -1,0 +1,218 @@
+/* ═══════════════════════════════════════════════════════════════
+   Drafted — X.com Design System
+   Custom properties + animations + scrollbar + components
+   Tailwind handles layout; this handles the soul.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 99px; }
+[data-theme="light"] ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); }
+
+/* ── Custom Properties ── */
+:root {
+    --x-accent: #1D9BF0;
+    --x-accent-hover: #1A8CD8;
+    --x-accent-light: rgba(29,155,240,0.1);
+    --x-like: #F91880;
+    --x-like-light: rgba(249,24,128,0.1);
+    --x-repost: #00BA7C;
+    --x-repost-light: rgba(0,186,124,0.1);
+    --x-danger: #F4212E;
+}
+
+/* ── Animations ── */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(100%); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scaleIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes heartBeat {
+    0% { transform: scale(1); }
+    15% { transform: scale(1.35); }
+    30% { transform: scale(0.9); }
+    45% { transform: scale(1.15); }
+    60% { transform: scale(0.95); }
+    100% { transform: scale(1); }
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+@keyframes toastSlide {
+    from { transform: translateX(-50%) translateY(-20px); opacity: 0; }
+    to { transform: translateX(-50%) translateY(0); opacity: 1; }
+}
+
+@keyframes floatUp {
+    from { opacity: 0; transform: translateY(20px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ── Feed Post entrance stagger ── */
+.x-post-feed > *:nth-child(1) { animation: fadeIn 0.3s ease both; animation-delay: 0.0s; }
+.x-post-feed > *:nth-child(2) { animation: fadeIn 0.3s ease both; animation-delay: 0.04s; }
+.x-post-feed > *:nth-child(3) { animation: fadeIn 0.3s ease both; animation-delay: 0.08s; }
+.x-post-feed > *:nth-child(4) { animation: fadeIn 0.3s ease both; animation-delay: 0.12s; }
+.x-post-feed > *:nth-child(5) { animation: fadeIn 0.3s ease both; animation-delay: 0.16s; }
+.x-post-feed > *:nth-child(n+6) { animation: fadeIn 0.3s ease both; animation-delay: 0.2s; }
+
+/* ── Like Animation ── */
+.like-animate {
+    animation: heartBeat 0.45s ease;
+}
+
+/* ── Skeleton Loader ── */
+.skeleton {
+    background: linear-gradient(90deg, rgba(255,255,255,0.06) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.06) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 4px;
+}
+
+[data-theme="light"] .skeleton {
+    background: linear-gradient(90deg, rgba(0,0,0,0.04) 25%, rgba(0,0,0,0.08) 50%, rgba(0,0,0,0.04) 75%);
+    background-size: 200% 100%;
+}
+
+/* ── Toast ── */
+.toast-enter {
+    animation: toastSlide 0.3s ease both;
+}
+
+/* ── Post action buttons ── */
+.x-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px;
+    border-radius: 9999px;
+    font-size: 13px;
+    transition: all 0.15s ease;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    font-family: inherit;
+}
+
+.x-action-reply { color: #71767B; }
+.x-action-reply:hover { color: var(--x-accent); background: var(--x-accent-light); }
+
+.x-action-repost { color: #71767B; }
+.x-action-repost:hover { color: var(--x-repost); background: var(--x-repost-light); }
+
+.x-action-like { color: #71767B; }
+.x-action-like:hover { color: var(--x-like); background: var(--x-like-light); }
+.x-action-like.liked { color: var(--x-like); }
+
+.x-action-bookmark { color: #71767B; }
+.x-action-bookmark:hover { color: var(--x-accent); background: var(--x-accent-light); }
+
+
+
+/* ── Nav link active indicator ── */
+.nav-active {
+    font-weight: 700 !important;
+}
+
+/* ── Post composer textarea ── */
+.composer-input {
+    width: 100%;
+    border: none;
+    background: transparent;
+    resize: none;
+    outline: none;
+    font-family: inherit;
+    font-size: 20px;
+    line-height: 1.4;
+    min-height: 52px;
+    max-height: 300px;
+}
+
+/* ── Follow button ── */
+.follow-btn {
+    transition: all 0.2s ease;
+}
+
+.follow-btn:hover {
+    opacity: 0.9;
+}
+
+/* ── Smooth border for post cards ── */
+.post-card {
+    transition: background 0.15s ease;
+}
+
+/* ── Horizontal scroll rows (categories & tags) ── */
+.explore-scroll-row {
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+.explore-scroll-row::-webkit-scrollbar {
+    display: none;
+}
+
+/* ── Floating Action Button ── */
+.fab {
+    animation: floatUp 0.3s ease both;
+    box-shadow: 0 4px 16px rgba(29, 155, 240, 0.4);
+}
+
+.fab:active {
+    transform: scale(0.93);
+}
+
+/* ── Modal Overlay ── */
+.modal-overlay {
+    animation: fadeIn 0.2s ease;
+}
+
+.modal-content {
+    animation: scaleIn 0.25s ease;
+}
+
+/* ── Hide legacy styles ── */
+.navbar, .footer { display: none !important; }
+.page-wrapper { min-height: unset !important; padding: 0 !important; }
+
+/* ── Django form widget overrides ── */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="url"],
+input[type="number"],
+input[type="date"],
+input[type="search"],
+textarea,
+select {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* ── Native Select Fix ── */
+select option {
+    background-color: #FFFFFF;
+    color: #0F1419;
+}
+
+[data-theme="dark"] select option {
+    background-color: #16181C;
+    color: #E7E9EA;
+}

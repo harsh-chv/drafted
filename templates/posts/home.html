@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Home — Drafted{% endblock %}
+
+{% block content %}
+
+<!-- Tab Bar -->
+<div class="flex border-b border-[#EFF3F4] dark:border-[#2F3336] sticky top-0 md:top-0 z-40 bg-white/80 dark:bg-black/80 backdrop-blur-xl">
+    <a href="{% url 'posts:home' %}?sort=for_you" class="flex-1 text-center py-4 text-[15px] no-underline relative hover:bg-black/[0.03] dark:hover:bg-white/[0.03] transition-colors {% if current_sort == 'for_you' %}font-bold text-[#0F1419] dark:text-[#E7E9EA]{% else %}font-medium text-[#536471] dark:text-[#71767B]{% endif %}">
+        For you
+        {% if current_sort == 'for_you' %}
+        <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-14 h-1 bg-xblue rounded-full"></div>
+        {% endif %}
+    </a>
+    <a href="{% url 'posts:home' %}?sort=following" class="flex-1 text-center py-4 text-[15px] no-underline relative hover:bg-black/[0.03] dark:hover:bg-white/[0.03] transition-colors {% if current_sort == 'following' %}font-bold text-[#0F1419] dark:text-[#E7E9EA]{% else %}font-medium text-[#536471] dark:text-[#71767B]{% endif %}">
+        Following
+        {% if current_sort == 'following' %}
+        <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-14 h-1 bg-xblue rounded-full"></div>
+        {% endif %}
+    </a>
+</div>
+
+<!-- Post Composer -->
+{% if user.is_authenticated %}
+<div class="hidden md:flex gap-3 px-4 py-3 border-b border-[#EFF3F4] dark:border-[#2F3336]">
+    <div class="w-10 h-10 rounded-full bg-[#F7F9F9] dark:bg-[#16181C] flex items-center justify-center text-sm font-bold text-[#536471] dark:text-[#71767B] flex-shrink-0 overflow-hidden">
+        {% if user.avatar %}
+            <img src="{{ user.avatar.url }}" class="w-full h-full object-cover rounded-full">
+        {% else %}
+            {{ user.username|first|upper }}
+        {% endif %}
+    </div>
+    <div class="flex-1">
+        <a href="{% url 'posts:create' %}" class="block text-xl text-[#536471] dark:text-[#71767B] py-3 no-underline hover:text-[#0F1419] dark:hover:text-[#E7E9EA] transition-colors">
+            What's on your mind?
+        </a>
+        <div class="flex justify-between items-center pt-3 border-t border-[#EFF3F4] dark:border-[#2F3336]">
+            <div class="flex gap-2"></div>
+            <a href="{% url 'posts:create' %}" class="bg-xblue hover:bg-xblue_h text-white font-bold text-[15px] px-5 py-2 rounded-full no-underline transition-colors">Post</a>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Feed -->
+{% if page_obj %}
+<div class="x-post-feed">
+    {% for post in page_obj %}
+    <article class="post-card flex gap-3 px-4 py-3 border-b border-[#EFF3F4] dark:border-[#2F3336] hover:bg-black/[0.03] dark:hover:bg-white/[0.03] transition-colors cursor-pointer" onclick="if(!event.target.closest('.x-action-btn') && !event.target.closest('a')) window.location.href='{% url 'posts:detail' slug=post.slug %}'">
+        
+        <!-- Avatar -->
+        <div class="w-10 h-10 rounded-full bg-[#F7F9F9] dark:bg-[#16181C] flex items-center justify-center text-sm font-bold text-[#536471] dark:text-[#71767B] flex-shrink-0 overflow-hidden">
+            {% if post.author.avatar %}
+                <img src="{{ post.author.avatar.url }}" class="w-full h-full object-cover rounded-full">
+            {% else %}
+                {{ post.author.username|first|upper }}
+            {% endif %}
+        </div>
+
+        <!-- Content -->
+        <div class="flex-1 min-w-0">
+            <!-- Header -->
+            <div class="flex items-baseline gap-1 flex-wrap mb-0.5">
+                <span class="font-bold text-[15px] text-[#0F1419] dark:text-[#E7E9EA] hover:underline">{{ post.author.username }}</span>
+                <span class="text-[#536471] dark:text-[#71767B] text-[15px]">@{{ post.author.username|lower }}</span>
+                <span class="text-[#536471] dark:text-[#71767B]">·</span>
+                <span class="text-[#536471] dark:text-[#71767B] text-[15px]">{{ post.created_at|naturaltime }}</span>
+            </div>
+
+            <!-- Body -->
+            <div class="text-[15px] leading-relaxed mb-3">
+                <strong class="block mb-1 text-[#0F1419] dark:text-[#E7E9EA]">{{ post.title }}</strong>
+                <span class="text-[#536471] dark:text-[#71767B]">{{ post.content|truncatewords:35 }}</span>
+                <span class="text-xblue text-sm ml-1">Read more →</span>
+            </div>
+
+            <!-- Image -->
+            {% if post.cover_image %}
+            <div class="mb-3 rounded-2xl overflow-hidden border border-[#EFF3F4] dark:border-[#2F3336]">
+                <img src="{{ post.cover_image.url }}" alt="{{ post.title }}" class="w-full block max-h-[300px] sm:max-h-[350px] object-cover" loading="lazy">
+            </div>
+            {% endif %}
+
+            <!-- Tags -->
+            {% if post.tags.all %}
+            <div class="flex flex-wrap gap-1.5 mb-3">
+                {% for tag in post.tags.all %}
+                <span class="text-xblue text-[13px]">#{{ tag.name|cut:"#" }}</span>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Actions -->
+            <div class="flex gap-6 -ml-2 items-center">
+                <a href="{% url 'posts:detail' slug=post.slug %}" class="x-action-btn x-action-reply no-underline text-inherit flex items-center gap-1.5" title="Reply">
+                    <svg viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    <span>{{ post.comment_count }} Replies</span>
+                </a>
+                
+                {% if user.is_authenticated %}
+                <form method="POST" action="{% url 'interactions:like_toggle' post_id=post.pk %}" class="inline m-0 p-0">
+                    {% csrf_token %}
+                    <button type="submit" title="Like" class="x-action-btn x-action-like border-none bg-transparent m-0 cursor-pointer flex items-center gap-1.5 {% if post.pk in liked_post_ids %}liked{% endif %}" onclick="event.stopPropagation(); this.querySelector('svg').classList.add('like-animate')">
+                        <svg viewBox="0 0 24 24" class="w-[18px] h-[18px]" {% if post.pk in liked_post_ids %}fill="currentColor"{% else %}fill="none" stroke="currentColor" stroke-width="2"{% endif %}><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                        <span>{{ post.like_count }} Likes</span>
+                    </button>
+                </form>
+                {% else %}
+                <span class="x-action-btn x-action-like flex items-center gap-1.5" title="Like">
+                    <svg viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                    <span>{{ post.like_count }} Likes</span>
+                </span>
+                {% endif %}
+
+                <button type="button" onclick="copyPostLink('{% url 'posts:detail' slug=post.slug %}', event)" class="x-action-btn border-none bg-transparent m-0 cursor-pointer hover:text-xblue flex items-center gap-1.5 transition-colors" title="Share Post">
+                    <svg viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+                    <span>Share</span>
+                </button>
+            </div>
+        </div>
+    </article>
+    {% endfor %}
+</div>
+
+<!-- Pagination -->
+{% if page_obj.has_other_pages %}
+<div class="py-4 text-center border-b border-[#EFF3F4] dark:border-[#2F3336]">
+    {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}" class="text-xblue no-underline mr-4 hover:underline">← Previous</a>
+    {% endif %}
+    <span class="text-[#536471] dark:text-[#71767B] text-sm">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}" class="text-xblue no-underline ml-4 hover:underline">Next →</a>
+    {% endif %}
+</div>
+{% endif %}
+
+{% else %}
+<!-- Empty State -->
+{% if current_sort == 'following' %}
+<div class="py-20 px-8 text-center max-w-sm mx-auto">
+    <h3 class="text-3xl font-extrabold mb-3">You aren't following anyone yet</h3>
+    <p class="text-[#536471] dark:text-[#71767B] text-[15px] mb-8 leading-relaxed">When you follow people, their posts will show up here. Start exploring authors to customize your feed!</p>
+    <a href="?sort=for_you" class="inline-block bg-xblue hover:bg-xblue_h text-white font-bold text-[15px] px-8 py-3 rounded-full no-underline transition-colors">Back to For you</a>
+</div>
+{% else %}
+<div class="py-16 px-6 text-center">
+    <div class="text-5xl mb-4">📝</div>
+    <h3 class="text-2xl font-extrabold mb-2">Welcome to Drafted</h3>
+    <p class="text-[#536471] dark:text-[#71767B] text-[15px] mb-6 max-w-sm mx-auto leading-relaxed">This is the best place to see what's happening. Start writing and exploring the community.</p>
+    {% if user.is_authenticated %}
+        <a href="{% url 'posts:create' %}" class="inline-block bg-xblue hover:bg-xblue_h text-white font-bold text-[15px] px-6 py-3 rounded-full no-underline transition-colors">Write your first post</a>
+    {% else %}
+        <a href="{% url 'users:register' %}" class="inline-block bg-xblue hover:bg-xblue_h text-white font-bold text-[15px] px-6 py-3 rounded-full no-underline transition-colors">Get started</a>
+    {% endif %}
+</div>
+{% endif %}
+{% endif %}
+
+{% endblock %}
+
+

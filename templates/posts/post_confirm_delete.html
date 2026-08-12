@@ -1,0 +1,56 @@
+﻿{% extends 'base.html' %}
+
+{% block title %}Delete "{{ post.title }}" — Drafted{% endblock %}
+
+{% block content %}
+
+<!-- Header -->
+<div class="sticky top-0 z-40 bg-white/80 dark:bg-black/80 backdrop-blur-xl px-4 py-2 flex items-center gap-6 border-b border-[#EFF3F4] dark:border-[#2F3336]">
+    <a href="{% url 'posts:detail' slug=post.slug %}" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-[#0F1419] dark:text-[#E7E9EA]">
+        <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor"><path d="M7.414 13l5.043 5.04-1.414 1.42L3.586 12l7.457-7.46 1.414 1.42L7.414 11H21v2H7.414z"/></svg>
+    </a>
+    <h1 class="text-xl font-extrabold">Delete post</h1>
+</div>
+
+<div class="px-4 py-6">
+    <!-- Warning -->
+    <div class="p-4 rounded-2xl border border-[#F4212E]/30 bg-[#F4212E]/5 mb-6">
+        <div class="flex gap-3">
+            <svg viewBox="0 0 24 24" class="w-6 h-6 text-[#F4212E] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <div>
+                <h3 class="font-bold text-[17px] text-[#F4212E] mb-1">This can't be undone</h3>
+                <p class="text-[15px] text-[#536471] dark:text-[#71767B] leading-relaxed">
+                    This will permanently delete <strong class="text-[#0F1419] dark:text-[#E7E9EA]">"{{ post.title }}"</strong> and remove it from your profile, the timeline, and search results.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Post Preview -->
+    <div class="flex gap-3 p-4 rounded-2xl border border-[#EFF3F4] dark:border-[#2F3336] mb-8">
+        <div class="w-10 h-10 rounded-full bg-[#F7F9F9] dark:bg-[#16181C] flex items-center justify-center text-sm font-bold text-[#536471] dark:text-[#71767B] flex-shrink-0">
+            {{ post.author.username|first|upper }}
+        </div>
+        <div class="flex-1 min-w-0">
+            <div class="flex items-baseline gap-1 mb-1">
+                <span class="font-bold text-[15px] text-[#0F1419] dark:text-[#E7E9EA]">{{ post.author.username }}</span>
+                <span class="text-[#536471] dark:text-[#71767B] text-[15px]">@{{ post.author.username|lower }}</span>
+            </div>
+            <p class="text-[15px] text-[#0F1419] dark:text-[#E7E9EA] leading-relaxed">
+                <strong>{{ post.title }}</strong><br>
+                <span class="text-[#536471] dark:text-[#71767B]">{{ post.content|truncatewords:20 }}</span>
+            </p>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <form method="POST">
+        {% csrf_token %}
+        <div class="flex gap-3">
+            <button type="submit" class="px-6 py-2.5 rounded-full bg-[#F4212E] hover:bg-[#DC1D27] text-white font-bold text-[15px] border-none cursor-pointer transition-colors">Delete</button>
+            <a href="{% url 'posts:detail' slug=post.slug %}" class="px-6 py-2.5 rounded-full border border-[#CFD9DE] dark:border-[#536471] text-[#0F1419] dark:text-[#E7E9EA] font-bold text-[15px] no-underline hover:bg-black/5 dark:hover:bg-white/5 transition-colors">Cancel</a>
+        </div>
+    </form>
+</div>
+
+{% endblock %}

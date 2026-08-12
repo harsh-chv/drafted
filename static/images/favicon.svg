@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36">
+    <defs>
+        <linearGradient id="wsGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#1D9BF0"/>
+            <stop offset="100%" stop-color="#0A66C2"/>
+        </linearGradient>
+    </defs>
+    <rect x="2" y="2" width="32" height="32" rx="10" fill="url(#wsGrad)"/>
+    <path d="M10 11 L13.5 25 L18 15 L22.5 25 L26 11" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

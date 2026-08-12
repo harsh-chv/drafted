@@ -1,0 +1,223 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Explore — Drafted{% endblock %}
+
+{% block content %}
+
+<!-- Sticky Header with Search -->
+<div class="sticky top-0 z-40 backdrop-blur-xl bg-white/90 dark:bg-black/90 border-b border-[#EFF3F4] dark:border-[#2F3336]">
+    <div class="px-4 pt-2 pb-1.5">
+        <h1 class="text-[15px] font-extrabold m-0 mb-1.5">Explore</h1>
+        <form method="GET" action="{% url 'posts:explore' %}" class="relative">
+            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#536471] dark:text-[#71767B] pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" name="q" placeholder="Search posts, authors, topics..." value="{{ query|default:'' }}" required class="w-full py-1.5 pl-9 pr-3 rounded-full bg-[#EFF3F4] dark:bg-[#16181C] border border-transparent focus:border-xblue focus:bg-white dark:focus:bg-black focus:ring-1 focus:ring-xblue text-[13px] text-[#0F1419] dark:text-[#E7E9EA] placeholder-[#536471] dark:placeholder-[#71767B] outline-none transition-all">
+        </form>
+    </div>
+
+    <!-- Sort Tabs -->
+    <div class="flex border-t border-[#EFF3F4] dark:border-[#2F3336]">
+        <a href="{% url 'posts:explore' %}?sort=popular{% if query %}&q={{ query }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}" class="flex-1 text-center py-2 text-[13px] no-underline relative hover:bg-black/[0.03] dark:hover:bg-white/[0.03] transition-colors {% if current_sort == 'popular' %}font-bold text-[#0F1419] dark:text-[#E7E9EA]{% else %}font-medium text-[#536471] dark:text-[#71767B]{% endif %}">
+            Popular
+            {% if current_sort == 'popular' %}
+            <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-[3px] bg-xblue rounded-full"></div>
+            {% endif %}
+        </a>
+        <a href="{% url 'posts:explore' %}?sort=latest{% if query %}&q={{ query }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}" class="flex-1 text-center py-2 text-[13px] no-underline relative hover:bg-black/[0.03] dark:hover:bg-white/[0.03] transition-colors {% if current_sort == 'latest' %}font-bold text-[#0F1419] dark:text-[#E7E9EA]{% else %}font-medium text-[#536471] dark:text-[#71767B]{% endif %}">
+            Latest
+            {% if current_sort == 'latest' %}
+            <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-[3px] bg-xblue rounded-full"></div>
+            {% endif %}
+        </a>
+    </div>
+</div>
+
+
+
+
+<!-- Search Results Info -->
+{% if query %}
+<div class="px-4 py-2 border-b border-[#EFF3F4] dark:border-[#2F3336]">
+    <p class="text-[13px] text-[#536471] dark:text-[#71767B] m-0">
+        Results for <span class="font-bold text-[#0F1419] dark:text-[#E7E9EA]">"{{ query }}"</span>
+        {% if page_obj %}<span class="ml-1">· {{ page_obj.paginator.count }} post{{ page_obj.paginator.count|pluralize }}</span>{% endif %}
+    </p>
+</div>
+{% endif %}
+
+<!-- Results Feed -->
+{% if page_obj %}
+<div class="x-post-feed">
+    {% for post in page_obj %}
+    <article class="post-card flex gap-2.5 px-3 py-2.5 border-b border-[#EFF3F4] dark:border-[#2F3336] hover:bg-black/[0.03] dark:hover:bg-white/[0.03] transition-colors cursor-pointer" onclick="if(!event.target.closest('.x-action-btn') && !event.target.closest('a')) window.location.href='{% url 'posts:detail' slug=post.slug %}'">
+        
+        <!-- Avatar -->
+        <div class="w-9 h-9 rounded-full bg-[#F7F9F9] dark:bg-[#16181C] flex items-center justify-center text-xs font-bold text-[#536471] dark:text-[#71767B] flex-shrink-0 overflow-hidden">
+            {% if post.author.avatar %}
+                <img src="{{ post.author.avatar.url }}" class="w-full h-full object-cover rounded-full">
+            {% else %}
+                {{ post.author.username|first|upper }}
+            {% endif %}
+        </div>
+
+        <!-- Content -->
+        <div class="flex-1 min-w-0">
+            <!-- Header -->
+            <div class="flex items-baseline gap-1 flex-wrap">
+                <span class="font-bold text-[13px] text-[#0F1419] dark:text-[#E7E9EA] hover:underline">{{ post.author.username }}</span>
+                <span class="text-[#536471] dark:text-[#71767B] text-[13px]">@{{ post.author.username|lower }}</span>
+                <span class="text-[#536471] dark:text-[#71767B] text-[11px]">·</span>
+                <span class="text-[#536471] dark:text-[#71767B] text-[13px]">{{ post.created_at|naturaltime }}</span>
+            </div>
+
+            <!-- Body -->
+            <div class="text-[13px] leading-snug mt-0.5 mb-2">
+                <strong class="block mb-0.5 text-[#0F1419] dark:text-[#E7E9EA]">{{ post.title }}</strong>
+                <span class="text-[#536471] dark:text-[#71767B]">{{ post.content|truncatewords:30 }}</span>
+                <span class="text-xblue text-[12px] ml-1">Read more →</span>
+            </div>
+
+            <!-- Image -->
+            {% if post.cover_image %}
+            <div class="mb-2 rounded-xl overflow-hidden border border-[#EFF3F4] dark:border-[#2F3336]">
+                <img src="{{ post.cover_image.url }}" alt="{{ post.title }}" class="w-full block max-h-[220px] sm:max-h-[260px] object-cover" loading="lazy">
+            </div>
+            {% endif %}
+
+            <!-- Category badge -->
+            {% if post.category %}
+            <span class="text-[11px] text-xblue bg-xblue/10 px-2 py-0.5 rounded-full font-medium mb-1 inline-block">{{ post.category.name }}</span>
+            {% endif %}
+
+            <!-- Actions -->
+            <div class="flex gap-5 -ml-1.5 mt-0.5 items-center">
+                <a href="{% url 'posts:detail' slug=post.slug %}" class="x-action-btn x-action-reply no-underline text-inherit flex items-center gap-1.5" title="Reply">
+                    <svg viewBox="0 0 24 24" class="w-[16px] h-[16px]" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    <span>{{ post.comment_count }} Replies</span>
+                </a>
+                
+                {% if user.is_authenticated %}
+                <form method="POST" action="{% url 'interactions:like_toggle' post_id=post.pk %}" class="inline m-0 p-0">
+                    {% csrf_token %}
+                    <button type="submit" title="Like" class="x-action-btn x-action-like border-none bg-transparent m-0 cursor-pointer flex items-center gap-1.5 {% if post.pk in liked_post_ids %}liked{% endif %}" onclick="event.stopPropagation(); this.querySelector('svg').classList.add('like-animate')">
+                        <svg viewBox="0 0 24 24" class="w-[16px] h-[16px]" {% if post.pk in liked_post_ids %}fill="currentColor"{% else %}fill="none" stroke="currentColor" stroke-width="2"{% endif %}><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                        <span>{{ post.like_count }} Likes</span>
+                    </button>
+                </form>
+                {% else %}
+                <span class="x-action-btn x-action-like flex items-center gap-1.5" title="Like">
+                    <svg viewBox="0 0 24 24" class="w-[16px] h-[16px]" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                    <span>{{ post.like_count }} Likes</span>
+                </span>
+                {% endif %}
+
+                <button type="button" onclick="copyPostLink('{% url 'posts:detail' slug=post.slug %}', event)" class="x-action-btn border-none bg-transparent m-0 cursor-pointer hover:text-xblue flex items-center gap-1.5 transition-colors" title="Share Post">
+                    <svg viewBox="0 0 24 24" class="w-[16px] h-[16px]" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+                    <span>Share</span>
+                </button>
+            </div>
+        </div>
+    </article>
+    {% endfor %}
+</div>
+
+<!-- Pagination -->
+{% if page_obj.has_other_pages %}
+<div class="py-3 text-center border-b border-[#EFF3F4] dark:border-[#2F3336]">
+    {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}&sort={{ current_sort }}{% if current_category %}&category={{ current_category }}{% endif %}" class="text-xblue text-[13px] no-underline mr-4 hover:underline">← Previous</a>
+    {% endif %}
+    <span class="text-[#536471] dark:text-[#71767B] text-[12px]">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}&sort={{ current_sort }}{% if current_category %}&category={{ current_category }}{% endif %}" class="text-xblue text-[13px] no-underline ml-4 hover:underline">Next →</a>
+    {% endif %}
+</div>
+{% endif %}
+
+{% else %}
+<!-- Empty State -->
+<div class="flex flex-col items-center justify-center py-12 px-6 text-center">
+    <svg viewBox="0 0 24 24" class="w-10 h-10 text-[#536471] dark:text-[#71767B] mb-3" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    {% if query %}
+    <h2 class="text-xl font-extrabold mb-1">No results for "{{ query }}"</h2>
+    <p class="text-[#536471] dark:text-[#71767B] text-[13px] max-w-xs">Try searching for something else, or browse categories above.</p>
+    {% else %}
+    <h2 class="text-xl font-extrabold mb-1">Nothing to explore yet</h2>
+    <p class="text-[#536471] dark:text-[#71767B] text-[13px] max-w-xs">Be the first to create content on Drafted!</p>
+    {% endif %}
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block right_sidebar %}
+<!-- Search (always visible in explore right sidebar) -->
+<div class="sticky top-0 pt-2 pb-2 bg-white dark:bg-black z-10">
+    <form method="GET" action="{% url 'posts:explore' %}" class="relative">
+        <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#536471] dark:text-[#71767B] pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" name="q" placeholder="Search" value="{{ query|default:'' }}" class="w-full py-2 pl-10 pr-4 rounded-full bg-[#EFF3F4] dark:bg-[#16181C] border border-transparent focus:border-xblue focus:bg-white dark:focus:bg-black focus:ring-1 focus:ring-xblue text-[13px] text-[#0F1419] dark:text-[#E7E9EA] placeholder-[#536471] dark:placeholder-[#71767B] outline-none transition-all">
+    </form>
+</div>
+
+<!-- Trends for you (Dynamic) -->
+<div class="bg-[#F7F9F9] dark:bg-[#16181C] rounded-2xl mb-3 overflow-hidden">
+    <h2 class="text-[15px] font-extrabold px-4 py-2.5">Trends for you</h2>
+
+    {% if trending_tags %}
+        {% for tag in trending_tags %}
+        <a href="{% url 'posts:explore' %}?tag={{ tag.slug }}" class="block px-4 py-2.5 hover:bg-black/[0.03] dark:hover:bg-white/[0.03] transition-colors no-underline">
+            <div class="flex justify-between items-start">
+                <span class="text-[11px] text-[#536471] dark:text-[#71767B]">Trending in Drafted</span>
+                <span class="text-[#536471] dark:text-[#71767B] text-xs px-1 rounded-full hover:bg-[rgba(29,155,240,0.1)] hover:text-xblue cursor-pointer">···</span>
+            </div>
+            <p class="font-bold text-[14px] text-[#0F1419] dark:text-[#E7E9EA] my-0.5">#{{ tag.name|cut:"#" }}</p>
+            <span class="text-[11px] text-[#536471] dark:text-[#71767B]">{{ tag.num_posts }} post{{ tag.num_posts|pluralize }}</span>
+        </a>
+        {% endfor %}
+    {% else %}
+        <p class="px-4 py-2.5 text-[13px] text-[#536471] dark:text-[#71767B] m-0">No trends yet. Start posting to create trends!</p>
+    {% endif %}
+
+    <a href="{% url 'posts:explore' %}" class="block px-4 py-2.5 text-xblue text-[13px] hover:bg-black/[0.03] dark:hover:bg-white/[0.03] transition-colors no-underline">Show more</a>
+</div>
+
+<!-- Who to Follow (Dynamic) -->
+{% if user.is_authenticated and suggested_users %}
+<div class="bg-[#F7F9F9] dark:bg-[#16181C] rounded-2xl mb-3 overflow-hidden">
+    <h2 class="text-[15px] font-extrabold px-4 py-2.5">Who to follow</h2>
+
+    {% for suser in suggested_users %}
+    <div class="px-4 py-2.5 flex items-center gap-2.5 hover:bg-black/[0.03] dark:hover:bg-white/[0.03] transition-colors">
+        <a href="{% url 'users:profile' username=suser.username %}" class="shrink-0 no-underline">
+            <div class="w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center text-white text-sm font-bold overflow-hidden" style="background:linear-gradient(135deg,#667eea,#764ba2)">
+                {% if suser.avatar %}
+                    <img src="{{ suser.avatar.url }}" class="w-full h-full object-cover rounded-full">
+                {% else %}
+                    {{ suser.username|first|upper }}
+                {% endif %}
+            </div>
+        </a>
+        <a href="{% url 'users:profile' username=suser.username %}" class="flex-1 min-w-0 no-underline">
+            <p class="font-bold text-[13px] truncate leading-tight m-0 text-[#0F1419] dark:text-[#E7E9EA]">{{ suser.get_full_name|default:suser.username }}</p>
+            <p class="text-[11px] text-[#536471] dark:text-[#71767B] m-0">@{{ suser.username }}</p>
+        </a>
+        <form method="POST" action="{% url 'interactions:follow_toggle' username=suser.username %}" class="m-0 p-0">
+            {% csrf_token %}
+            <button type="submit" class="follow-btn bg-[#0F1419] dark:bg-[#EFF3F4] text-white dark:text-[#0F1419] font-bold text-[12px] px-3.5 py-1 rounded-full border-none cursor-pointer font-sans">Follow</button>
+        </form>
+    </div>
+    {% endfor %}
+
+    <a href="{% url 'posts:explore' %}" class="block px-4 py-2.5 text-xblue text-[13px] hover:bg-black/[0.03] dark:hover:bg-white/[0.03] transition-colors no-underline">Show more</a>
+</div>
+{% endif %}
+
+<!-- Footer -->
+<nav class="flex flex-wrap gap-x-3 gap-y-1 px-1 py-2">
+    <a href="#" class="text-[12px] text-[#536471] dark:text-[#71767B] no-underline hover:underline">Terms</a>
+    <a href="#" class="text-[12px] text-[#536471] dark:text-[#71767B] no-underline hover:underline">Privacy</a>
+    <a href="#" class="text-[12px] text-[#536471] dark:text-[#71767B] no-underline hover:underline">Cookies</a>
+    <a href="#" class="text-[12px] text-[#536471] dark:text-[#71767B] no-underline hover:underline">About</a>
+    <span class="text-[12px] text-[#536471] dark:text-[#71767B]">© 2026 Drafted</span>
+</nav>
+{% endblock %}

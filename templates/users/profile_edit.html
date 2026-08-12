@@ -1,0 +1,94 @@
+﻿{% extends 'base.html' %}
+
+{% block title %}Edit profile — Drafted{% endblock %}
+
+{% block content %}
+
+<!-- Header -->
+<div class="sticky top-0 z-40 bg-white/80 dark:bg-black/80 backdrop-blur-xl px-4 py-2 flex items-center justify-between border-b border-[#EFF3F4] dark:border-[#2F3336]">
+    <div class="flex items-center gap-4">
+        <a href="{% url 'users:profile' username=user.username %}" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-[#0F1419] dark:text-[#E7E9EA]">
+            <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor"><path d="M10.59 12L4.54 5.96l1.42-1.42L12 10.59l6.04-6.05 1.42 1.42L13.41 12l6.05 6.04-1.42 1.42L12 13.41l-6.04 6.05-1.42-1.42L10.59 12z"/></svg>
+        </a>
+        <span class="text-xl font-extrabold">Edit profile</span>
+    </div>
+    <button type="submit" form="profileForm" class="bg-[#0F1419] dark:bg-[#EFF3F4] hover:opacity-90 text-white dark:text-[#0F1419] font-bold text-[15px] px-5 py-2 rounded-full border-none cursor-pointer transition-opacity">
+        Save
+    </button>
+</div>
+
+<!-- Banner placeholder -->
+<div class="h-48 bg-[#CFD9DE] dark:bg-[#333639] w-full relative flex items-center justify-center group cursor-pointer">
+    <div class="w-10 h-10 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+        <svg viewBox="0 0 24 24" class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+    </div>
+</div>
+
+<!-- Avatar -->
+<div class="px-4 relative">
+    <div class="absolute -top-16 left-4 w-[112px] h-[112px] rounded-full border-4 border-white dark:border-black bg-[#F7F9F9] dark:bg-[#16181C] overflow-hidden flex items-center justify-center cursor-pointer group">
+        {% if user.avatar %}
+            <img src="{{ user.avatar.url }}" class="w-full h-full object-cover">
+        {% else %}
+            <span class="text-4xl font-bold text-[#536471] dark:text-[#71767B]">{{ user.username|first|upper }}</span>
+        {% endif %}
+        <div class="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
+            <svg viewBox="0 0 24 24" class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        </div>
+    </div>
+</div>
+
+<!-- Form -->
+<form method="POST" enctype="multipart/form-data" id="profileForm" class="px-4 pt-20 pb-8">
+    {% csrf_token %}
+
+    <!-- Avatar Upload -->
+    <div class="mb-6">
+        <label class="block text-[13px] text-[#536471] dark:text-[#71767B] mb-2 font-medium">Profile photo</label>
+        <label class="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-dashed border-[#CFD9DE] dark:border-[#333639] cursor-pointer hover:border-xblue hover:bg-[rgba(29,155,240,0.04)] transition-all text-[15px] text-[#536471] dark:text-[#71767B] w-fit">
+            <svg viewBox="0 0 24 24" class="w-5 h-5 text-xblue" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            Choose photo
+            <input type="file" name="avatar" accept="image/*" class="hidden">
+        </label>
+    </div>
+
+    <!-- First Name -->
+    <div class="mb-5">
+        <label class="block text-[13px] text-[#536471] dark:text-[#71767B] mb-2 font-medium">First name</label>
+        <input type="text" name="first_name" value="{{ form.first_name.value|default:'' }}"
+            class="w-full px-4 py-3.5 rounded-[4px] border border-[#CFD9DE] dark:border-[#333639] bg-transparent text-[17px] text-[#0F1419] dark:text-[#E7E9EA] focus:border-xblue focus:ring-1 focus:ring-xblue outline-none transition-all"
+            placeholder="Your first name">
+    </div>
+
+    <!-- Last Name -->
+    <div class="mb-5">
+        <label class="block text-[13px] text-[#536471] dark:text-[#71767B] mb-2 font-medium">Last name</label>
+        <input type="text" name="last_name" value="{{ form.last_name.value|default:'' }}"
+            class="w-full px-4 py-3.5 rounded-[4px] border border-[#CFD9DE] dark:border-[#333639] bg-transparent text-[17px] text-[#0F1419] dark:text-[#E7E9EA] focus:border-xblue focus:ring-1 focus:ring-xblue outline-none transition-all"
+            placeholder="Your last name">
+    </div>
+
+    <!-- Bio -->
+    <div class="mb-5">
+        <label class="block text-[13px] text-[#536471] dark:text-[#71767B] mb-2 font-medium">Bio</label>
+        <textarea name="bio" rows="3"
+            class="w-full px-4 py-3.5 rounded-[4px] border border-[#CFD9DE] dark:border-[#333639] bg-transparent text-[17px] text-[#0F1419] dark:text-[#E7E9EA] focus:border-xblue focus:ring-1 focus:ring-xblue outline-none transition-all resize-none placeholder-[#536471]"
+            placeholder="Tell the world about yourself">{{ form.bio.value|default:'' }}</textarea>
+    </div>
+
+    <!-- Website -->
+    <div class="mb-5">
+        <label class="block text-[13px] text-[#536471] dark:text-[#71767B] mb-2 font-medium">Website</label>
+        <input type="url" name="website" value="{{ form.website.value|default:'' }}"
+            class="w-full px-4 py-3.5 rounded-[4px] border border-[#CFD9DE] dark:border-[#333639] bg-transparent text-[17px] text-[#0F1419] dark:text-[#E7E9EA] focus:border-xblue focus:ring-1 focus:ring-xblue outline-none transition-all"
+            placeholder="https://yoursite.com">
+    </div>
+
+    {% if form.errors %}
+    <div class="px-4 py-3 rounded-lg bg-[#F4212E]/10 border border-[#F4212E]/30 text-[#F4212E] text-[15px] mb-5">
+        Please correct the errors above.
+    </div>
+    {% endif %}
+</form>
+
+{% endblock %}

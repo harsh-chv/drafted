@@ -1,0 +1,346 @@
+﻿{% extends 'base.html' %}
+
+{% block title %}{% if form.instance.pk %}Edit Post{% else %}New Post{% endif %} — Drafted{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ── Tag Chips ── */
+    .tag-chips-wrap {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 12px;
+        border-radius: 12px;
+        border: 1px solid #EFF3F4;
+        background: transparent;
+        min-height: 44px;
+        cursor: text;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    [data-theme="dark"] .tag-chips-wrap {
+        border-color: #2F3336;
+    }
+    .tag-chips-wrap:focus-within {
+        border-color: #1D9BF0;
+        box-shadow: 0 0 0 1px #1D9BF0;
+    }
+    .tag-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        background: rgba(29, 155, 240, 0.1);
+        color: #1D9BF0;
+        font-size: 13px;
+        font-weight: 600;
+        padding: 4px 10px;
+        border-radius: 9999px;
+        line-height: 1.3;
+        animation: chipIn 0.15s ease-out;
+        white-space: nowrap;
+    }
+    @keyframes chipIn {
+        from { transform: scale(0.85); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+    }
+    .tag-chip-remove {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: rgba(29, 155, 240, 0.15);
+        border: none;
+        color: #1D9BF0;
+        cursor: pointer;
+        font-size: 11px;
+        line-height: 1;
+        padding: 0;
+        transition: background 0.15s;
+    }
+    .tag-chip-remove:hover {
+        background: rgba(29, 155, 240, 0.3);
+    }
+    .tag-input-inline {
+        flex: 1 1 80px;
+        min-width: 80px;
+        border: none;
+        outline: none;
+        background: transparent;
+        font-size: 14px;
+        color: #0F1419;
+        padding: 2px 0;
+    }
+    [data-theme="dark"] .tag-input-inline {
+        color: #E7E9EA;
+    }
+    .tag-input-inline::placeholder {
+        color: #536471;
+    }
+    [data-theme="dark"] .tag-input-inline::placeholder {
+        color: #71767B;
+    }
+    .tag-hint {
+        font-size: 12px;
+        color: #536471;
+        margin-top: 6px;
+    }
+    [data-theme="dark"] .tag-hint {
+        color: #71767B;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Header -->
+<div class="sticky top-0 z-40 bg-white/80 dark:bg-black/80 backdrop-blur-xl px-4 py-2 flex items-center justify-between border-b border-[#EFF3F4] dark:border-[#2F3336]">
+    <div class="flex items-center gap-4">
+        <a href="{% url 'posts:home' %}" title="Close" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-[#0F1419] dark:text-[#E7E9EA]">
+            <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor"><path d="M10.59 12L4.54 5.96l1.42-1.42L12 10.59l6.04-6.05 1.42 1.42L13.41 12l6.05 6.04-1.42 1.42L12 13.41l-6.04 6.05-1.42-1.42L10.59 12z"/></svg>
+        </a>
+        <span class="text-xl font-extrabold">{% if form.instance.pk %}Edit{% else %}Draft{% endif %}</span>
+    </div>
+    <button type="submit" form="postForm" class="bg-xblue hover:bg-xblue_h text-white font-bold text-[15px] px-5 py-2 rounded-full border-none cursor-pointer transition-colors">
+        {% if form.instance.pk %}Save{% else %}Post{% endif %}
+    </button>
+</div>
+
+<!-- Composer -->
+<div class="flex gap-2 sm:gap-3 px-3 sm:px-4 py-3 sm:py-4">
+    <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#F7F9F9] dark:bg-[#16181C] flex items-center justify-center text-xs sm:text-sm font-bold text-[#536471] dark:text-[#71767B] flex-shrink-0 overflow-hidden mt-1">
+        {% if user.avatar %}<img src="{{ user.avatar.url }}" class="w-full h-full object-cover rounded-full">{% else %}{{ user.username|first|upper }}{% endif %}
+    </div>
+    
+    <form method="POST" enctype="multipart/form-data" id="postForm" class="flex-1 min-w-0">
+        {% csrf_token %}
+        
+        <!-- Hidden fields for status and featured -->
+        {{ form.status }}
+        {{ form.featured }}
+
+        <!-- Form-level errors -->
+        {% if form.non_field_errors %}
+        <div class="mb-3 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-[#F4212E] text-[13px]">
+            {% for error in form.non_field_errors %}
+            <p>{{ error }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Title -->
+        <div class="mb-3 sm:mb-4">
+            <input type="text" name="title" value="{{ form.title.value|default:'' }}" placeholder="Title" required
+                class="w-full bg-transparent border-none outline-none text-[18px] sm:text-[22px] font-bold text-[#0F1419] dark:text-[#E7E9EA] placeholder-[#536471] dark:placeholder-[#71767B]">
+            {% if form.title.errors %}
+            <p class="text-[#F4212E] text-[13px] mt-1">{{ form.title.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Content -->
+        <div class="mb-3 sm:mb-4">
+            <textarea name="content" rows="6" placeholder="What's on your mind?" required
+                class="composer-input text-[#0F1419] dark:text-[#E7E9EA] placeholder-[#536471] dark:placeholder-[#71767B] min-h-[150px] sm:min-h-[200px]">{{ form.content.value|default:'' }}</textarea>
+            {% if form.content.errors %}
+            <p class="text-[#F4212E] text-[13px] mt-1">{{ form.content.errors.0 }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Tags (Interactive Chips) -->
+        <div class="mb-3 sm:mb-4">
+            <label class="block text-[13px] text-[#536471] dark:text-[#71767B] mb-1.5 font-medium">Tags</label>
+            <div class="tag-chips-wrap" id="tagChipsWrap">
+                <input type="text" class="tag-input-inline" id="tagInputInline" placeholder="Add tags..." autocomplete="off">
+            </div>
+            <input type="hidden" name="tag_names" id="tagNamesHidden" value="{{ form.tag_names.value|default:'' }}">
+            <p class="tag-hint">Press <kbd style="background:rgba(29,155,240,0.08);padding:1px 5px;border-radius:4px;font-size:11px;">Enter</kbd> or <kbd style="background:rgba(29,155,240,0.08);padding:1px 5px;border-radius:4px;font-size:11px;">,</kbd> to add · <kbd style="background:rgba(29,155,240,0.08);padding:1px 5px;border-radius:4px;font-size:11px;">Backspace</kbd> to remove</p>
+        </div>
+
+        <!-- Cover Image -->
+        <div class="mb-3 sm:mb-4">
+            <label class="block text-[13px] text-[#536471] dark:text-[#71767B] mb-1.5 font-medium">Attach image (Optional)</label>
+            
+            <!-- Image Preview -->
+            <div id="imagePreviewWrap" class="hidden mb-3 relative rounded-2xl overflow-hidden border border-[#EFF3F4] dark:border-[#2F3336] bg-[#F7F9F9] dark:bg-[#16181C]">
+                <img id="imagePreview" src="" alt="Preview" class="w-full block max-h-[250px] sm:max-h-[300px] object-contain">
+                <button type="button" id="removeImageBtn" class="absolute top-2 right-2 w-8 h-8 bg-black/70 hover:bg-black/90 text-white rounded-full flex items-center justify-center cursor-pointer border-none transition-colors" title="Remove image">
+                    <svg viewBox="0 0 24 24" class="w-4 h-4" fill="currentColor"><path d="M10.59 12L4.54 5.96l1.42-1.42L12 10.59l6.04-6.05 1.42 1.42L13.41 12l6.05 6.04-1.42 1.42L12 13.41l-6.04 6.05-1.42-1.42L10.59 12z"/></svg>
+                </button>
+            </div>
+
+            <!-- Existing image (edit mode) -->
+            {% if form.instance.cover_image %}
+            <div id="existingImageWrap" class="mb-3 relative rounded-2xl overflow-hidden border border-[#EFF3F4] dark:border-[#2F3336] bg-[#F7F9F9] dark:bg-[#16181C]">
+                <img src="{{ form.instance.cover_image.url }}" alt="Current cover" class="w-full block max-h-[250px] sm:max-h-[300px] object-contain">
+                <span class="absolute bottom-2 left-2 bg-black/60 text-white text-[12px] px-2.5 py-1 rounded-full">Current image</span>
+            </div>
+            {% endif %}
+
+            <!-- Upload button -->
+            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
+                <label id="fileLabel" class="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg border border-dashed border-[#CFD9DE] dark:border-[#333639] cursor-pointer hover:border-xblue hover:bg-[rgba(29,155,240,0.04)] transition-all text-[14px] sm:text-[15px] text-[#536471] dark:text-[#71767B] w-full sm:w-auto justify-center sm:justify-start">
+                    <svg viewBox="0 0 24 24" class="w-5 h-5 text-xblue flex-shrink-0" fill="currentColor"><path d="M3 5.5C3 4.119 4.119 3 5.5 3h13C19.881 3 21 4.119 21 5.5v13c0 1.381-1.119 2.5-2.5 2.5h-13C4.119 21 3 19.881 3 18.5v-13zM5.5 5c-.276 0-.5.224-.5.5v9.086l3-3 3 3 5-5 3 3V5.5c0-.276-.224-.5-.5-.5h-13z"/></svg>
+                    <span id="fileLabelText">Choose file</span>
+                    <input type="file" name="cover_image" accept="image/*" id="coverImageInput" class="hidden">
+                </label>
+                <span id="fileSizeInfo" class="text-[12px] text-[#536471] dark:text-[#71767B]">Max 5MB · JPG, PNG, WebP</span>
+            </div>
+        </div>
+
+        <!-- Bottom Bar -->
+        <div class="border-t border-[#EFF3F4] dark:border-[#2F3336] pt-3 flex justify-end items-center">
+            <!-- Mobile post button -->
+            <button type="submit" class="sm:hidden bg-xblue hover:bg-xblue_h text-white font-bold text-[14px] px-4 py-1.5 rounded-full border-none cursor-pointer transition-colors">
+                {% if form.instance.pk %}Save{% else %}Post{% endif %}
+            </button>
+        </div>
+    </form>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    // ── Image Upload Preview ──
+    var input = document.getElementById('coverImageInput');
+    var preview = document.getElementById('imagePreview');
+    var previewWrap = document.getElementById('imagePreviewWrap');
+    var removeBtn = document.getElementById('removeImageBtn');
+    var labelText = document.getElementById('fileLabelText');
+    var existingWrap = document.getElementById('existingImageWrap');
+    
+    if (input) {
+        input.addEventListener('change', function() {
+            var file = this.files[0];
+            if (file) {
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('Image must be under 5MB. Please choose a smaller file.');
+                    this.value = '';
+                    return;
+                }
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    previewWrap.classList.remove('hidden');
+                    if (existingWrap) existingWrap.classList.add('hidden');
+                };
+                reader.readAsDataURL(file);
+                var name = file.name;
+                labelText.textContent = name.length > 25 ? name.substring(0, 22) + '...' : name;
+            }
+        });
+
+        if (removeBtn) {
+            removeBtn.addEventListener('click', function() {
+                input.value = '';
+                preview.src = '';
+                previewWrap.classList.add('hidden');
+                labelText.textContent = 'Choose file';
+                if (existingWrap) existingWrap.classList.remove('hidden');
+            });
+        }
+    }
+
+    // ── Interactive Tag Chips ──
+    var chipWrap = document.getElementById('tagChipsWrap');
+    var tagInput = document.getElementById('tagInputInline');
+    var hiddenInput = document.getElementById('tagNamesHidden');
+    if (!chipWrap || !tagInput || !hiddenInput) return;
+
+    var tags = [];
+
+    // Parse initial tags from hidden input
+    var initial = hiddenInput.value.trim();
+    if (initial) {
+        initial.split(',').forEach(function(t) {
+            var cleaned = t.trim().replace(/^#+/, '').trim().toLowerCase();
+            if (cleaned && tags.indexOf(cleaned) === -1) {
+                tags.push(cleaned);
+            }
+        });
+        renderChips();
+    }
+
+    // Click on wrapper focuses input
+    chipWrap.addEventListener('click', function() {
+        tagInput.focus();
+    });
+
+    tagInput.addEventListener('keydown', function(e) {
+        var val = this.value.trim().replace(/^#+/, '').trim().toLowerCase();
+
+        // Enter or comma → add tag
+        if (e.key === 'Enter' || e.key === ',') {
+            e.preventDefault();
+            if (val && tags.indexOf(val) === -1) {
+                tags.push(val);
+                renderChips();
+            }
+            this.value = '';
+        }
+
+        // Backspace on empty → remove last tag
+        if (e.key === 'Backspace' && this.value === '' && tags.length > 0) {
+            tags.pop();
+            renderChips();
+        }
+    });
+
+    // Also handle paste with commas
+    tagInput.addEventListener('blur', function() {
+        var val = this.value.trim().replace(/^#+/, '').trim().toLowerCase();
+        if (val && tags.indexOf(val) === -1) {
+            tags.push(val);
+            renderChips();
+        }
+        this.value = '';
+    });
+
+    function renderChips() {
+        // Remove existing chips
+        var existingChips = chipWrap.querySelectorAll('.tag-chip');
+        existingChips.forEach(function(c) { c.remove(); });
+
+        // Create chips
+        tags.forEach(function(tag, idx) {
+            var chip = document.createElement('span');
+            chip.className = 'tag-chip';
+            chip.innerHTML = '#' + tag +
+                '<button type="button" class="tag-chip-remove" data-idx="' + idx + '">×</button>';
+            chipWrap.insertBefore(chip, tagInput);
+        });
+
+        // Sync hidden input
+        hiddenInput.value = tags.join(', ');
+
+        // Update placeholder
+        tagInput.placeholder = tags.length > 0 ? '' : 'Add tags...';
+    }
+
+    // Event delegation for remove buttons
+    chipWrap.addEventListener('click', function(e) {
+        var btn = e.target.closest('.tag-chip-remove');
+        if (btn) {
+            var idx = parseInt(btn.getAttribute('data-idx'));
+            tags.splice(idx, 1);
+            renderChips();
+            tagInput.focus();
+        }
+    });
+
+    // Ensure any partially typed tag is saved when the form is submitted
+    var postForm = document.getElementById('postForm');
+    if (postForm) {
+        postForm.addEventListener('submit', function() {
+            var val = tagInput.value.trim().replace(/^#+/, '').trim().toLowerCase();
+            if (val && tags.indexOf(val) === -1) {
+                tags.push(val);
+                hiddenInput.value = tags.join(', ');
+            }
+        });
+    }
+})();
+</script>
+{% endblock %}

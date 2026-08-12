@@ -1,0 +1,218 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}{{ post.title }} — Drafted{% endblock %}
+
+{% block extra_css %}
+<style>
+    textarea[name="content"] {
+        background-color: transparent !important;
+        border: none !important;
+        outline: none !important;
+        box-shadow: none !important;
+        color: inherit !important;
+        font-family: inherit !important;
+    }
+    textarea[name="content"]::placeholder {
+        color: #536471 !important;
+    }
+    [data-theme="dark"] textarea[name="content"]::placeholder {
+        color: #71767B !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Back Header -->
+<div class="sticky top-0 z-40 bg-white/80 dark:bg-black/80 backdrop-blur-xl px-4 py-2 flex items-center gap-6 border-b border-[#EFF3F4] dark:border-[#2F3336]">
+    <a href="{% url 'posts:home' %}" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-[#0F1419] dark:text-[#E7E9EA]">
+        <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor"><path d="M7.414 13l5.043 5.04-1.414 1.42L3.586 12l7.457-7.46 1.414 1.42L7.414 11H21v2H7.414z"/></svg>
+    </a>
+    <h1 class="text-xl font-extrabold">Post</h1>
+</div>
+
+<!-- Expanded Post -->
+<article class="px-4 pt-3 border-b border-[#EFF3F4] dark:border-[#2F3336]">
+    <!-- Author Info -->
+    <div class="flex gap-3 mb-3">
+        <div class="w-10 h-10 rounded-full bg-[#F7F9F9] dark:bg-[#16181C] flex items-center justify-center text-sm font-bold text-[#536471] dark:text-[#71767B] flex-shrink-0 overflow-hidden">
+            {% if post.author.avatar %}
+                <img src="{{ post.author.avatar.url }}" class="w-full h-full object-cover rounded-full">
+            {% else %}
+                {{ post.author.username|first|upper }}
+            {% endif %}
+        </div>
+        <div class="flex flex-col justify-center flex-1 min-w-0">
+            <a href="{% url 'users:profile' username=post.author.username %}" class="font-extrabold text-[15px] text-[#0F1419] dark:text-[#E7E9EA] no-underline hover:underline leading-tight">{{ post.author.get_full_name|default:post.author.username }}</a>
+            <span class="text-[#536471] dark:text-[#71767B] text-[13px]">@{{ post.author.username|lower }}</span>
+        </div>
+
+        {% if user == post.author or user.is_admin_role %}
+        <div class="flex gap-2 items-start ml-auto">
+            <a href="{% url 'posts:edit' slug=post.slug %}" class="px-3 py-1.5 text-[13px] rounded-full border border-[#EFF3F4] dark:border-[#2F3336] text-[#0F1419] dark:text-[#E7E9EA] no-underline hover:bg-black/5 dark:hover:bg-white/5 transition-colors font-bold">Edit</a>
+            <a href="{% url 'posts:delete' slug=post.slug %}" class="px-3 py-1.5 text-[13px] rounded-full border border-[#EFF3F4] dark:border-[#2F3336] text-[#F4212E] no-underline hover:bg-red-500/10 transition-colors font-bold">Delete</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Post Content -->
+    <div class="text-[17px] leading-relaxed mb-4">
+        <h2 class="text-2xl font-extrabold mb-3 text-[#0F1419] dark:text-[#E7E9EA]">{{ post.title }}</h2>
+        <div class="text-[#0F1419] dark:text-[#E7E9EA]">{{ post.content|linebreaks }}</div>
+    </div>
+
+    <!-- Cover Image -->
+    {% if post.cover_image %}
+    <div class="mb-4 rounded-2xl overflow-hidden border border-[#EFF3F4] dark:border-[#2F3336] bg-[#F7F9F9] dark:bg-[#16181C]">
+        <img src="{{ post.cover_image.url }}" alt="{{ post.title }}" class="w-full block max-h-[400px] sm:max-h-[500px] object-contain">
+    </div>
+    {% endif %}
+
+    <!-- Tags -->
+    {% if post.tags.all %}
+    <div class="flex flex-wrap gap-2 mb-4">
+        {% for tag in post.tags.all %}
+        <a href="{% url 'posts:home' %}?tag={{ tag.slug }}" class="text-xblue no-underline text-[15px] hover:underline">#{{ tag.name|cut:"#" }}</a>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Timestamp -->
+    <div class="text-[#536471] dark:text-[#71767B] text-[15px] pb-4 border-b border-[#EFF3F4] dark:border-[#2F3336]">
+        {{ post.created_at|date:"g:i A · M j, Y" }}
+    </div>
+    <!-- Engagement Stats -->
+    <div class="flex gap-5 py-3 border-b border-[#EFF3F4] dark:border-[#2F3336] text-[15px]">
+        <span><strong class="text-[#0F1419] dark:text-[#E7E9EA]">{{ post.comment_count }}</strong> <span class="text-[#536471] dark:text-[#71767B]">Replies</span></span>
+        <span><strong class="text-[#0F1419] dark:text-[#E7E9EA]">{{ post.like_count }}</strong> <span class="text-[#536471] dark:text-[#71767B]">Likes</span></span>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex justify-around py-1 border-b border-[#EFF3F4] dark:border-[#2F3336]">
+        <span class="x-action-btn x-action-reply p-3 flex items-center gap-1.5 cursor-pointer" onclick="replyToUser('{{ post.author.username }}')" title="Reply">
+            <svg viewBox="0 0 24 24" class="w-[22px] h-[22px]" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </span>
+        {% if user.is_authenticated %}
+        <form method="POST" action="{% url 'interactions:like_toggle' post_id=post.pk %}" class="inline">
+            {% csrf_token %}
+            <button type="submit" title="Like" class="x-action-btn x-action-like p-3 flex items-center gap-1.5 border-none bg-transparent cursor-pointer {% if user_has_liked %}liked{% endif %}">
+                <svg viewBox="0 0 24 24" class="w-[22px] h-[22px]" {% if user_has_liked %}fill="currentColor"{% else %}fill="none" stroke="currentColor" stroke-width="2"{% endif %}><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            </button>
+        </form>
+        {% else %}
+        <span class="x-action-btn x-action-like p-3 flex items-center gap-1.5" title="Like">
+            <svg viewBox="0 0 24 24" class="w-[22px] h-[22px]" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        </span>
+        {% endif %}
+        <button type="button" onclick="copyPostLink('{% url 'posts:detail' slug=post.slug %}', event)" class="x-action-btn p-3 border-none bg-transparent cursor-pointer hover:text-xblue flex items-center gap-1.5 transition-colors" title="Share Post">
+            <svg viewBox="0 0 24 24" class="w-[22px] h-[22px]" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+        </button>
+    </div>
+
+    <!-- Reply Box -->
+    {% if user.is_authenticated %}
+    <div class="flex gap-3 py-3">
+        <div class="w-10 h-10 rounded-full bg-[#F7F9F9] dark:bg-[#16181C] flex items-center justify-center text-sm font-bold text-[#536471] dark:text-[#71767B] flex-shrink-0 overflow-hidden">
+            {% if user.avatar %}<img src="{{ user.avatar.url }}" class="w-full h-full object-cover rounded-full">{% else %}{{ user.username|first|upper }}{% endif %}
+        </div>
+        <form method="POST" action="{% url 'interactions:comment_add' post_id=post.pk %}" class="flex-1">
+            {% csrf_token %}
+            <input type="hidden" name="parent_id" id="parent_id_input" value="">
+            <div class="mb-2">
+                {{ comment_form.content }}
+            </div>
+            <div class="flex justify-end">
+                <button type="submit" class="bg-xblue hover:bg-xblue_h text-white font-bold text-[15px] px-5 py-2 rounded-full border-none cursor-pointer transition-colors">Reply</button>
+            </div>
+        </form>
+    </div>
+    {% else %}
+    <div class="text-center py-4 text-[#536471] dark:text-[#71767B] text-[15px]">
+        <a href="{% url 'users:login' %}" class="text-xblue no-underline hover:underline">Log in</a> to reply
+    </div>
+    {% endif %}
+</article>
+
+<!-- Replies Thread (Reddit Style) -->
+<div class="px-2 sm:px-4 py-4 pt-6 min-h-[50vh]">
+    <h3 class="text-lg font-bold mb-4 px-2 text-[#0F1419] dark:text-[#E7E9EA] border-b border-[#EFF3F4] dark:border-[#2F3336] pb-2">{{ post.comment_count }} Comments</h3>
+
+    {% if comments %}
+        {% include "posts/comment_thread.html" with comments=comments %}
+    {% else %}
+    <div class="py-12 px-6 text-center rounded-xl border border-[#EFF3F4] dark:border-[#2F3336] mx-2">
+        <svg viewBox="0 0 24 24" class="w-12 h-12 mx-auto text-[#536471] dark:text-[#71767B] mb-3 opacity-50" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        <h3 class="text-lg font-bold mb-1">No comments yet</h3>
+        <p class="text-[#536471] dark:text-[#71767B] text-[14px]">Be the first to share your thoughts.</p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    async function toggleCommentLike(commentId, btnElement) {
+        const url = `/interactions/comment/${commentId}/like/`;
+        // Grab CSRF from an existing form or meta
+        const csrfInput = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (!csrfInput) return;
+        
+        try {
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfInput.value,
+                    'X-Requested-With': 'XMLHttpRequest',
+                }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                const icon = btnElement.querySelector('svg');
+                const countSpan = btnElement.querySelector('.comment-like-count');
+                
+                if (data.liked) {
+                    btnElement.classList.add('text-[#F91880]');
+                    btnElement.classList.remove('text-[#536471]', 'dark:text-[#71767B]');
+                    icon.setAttribute('fill', 'currentColor');
+                } else {
+                    btnElement.classList.remove('text-[#F91880]');
+                    btnElement.classList.add('text-[#536471]', 'dark:text-[#71767B]');
+                    icon.setAttribute('fill', 'none');
+                }
+                
+                if (data.like_count > 0) {
+                    countSpan.textContent = data.like_count;
+                } else {
+                    countSpan.textContent = 'Like';
+                }
+            } else if (res.status === 401 || res.status === 403) {
+                // If not logged in
+                const loginLink = document.querySelector('a[href*="/login"]');
+                if (loginLink) loginLink.click();
+            }
+        } catch (error) {
+            console.error('Error toggling comment like:', error);
+        }
+    }
+
+    function replyToUser(username, commentId = null) {
+        const textarea = document.querySelector('textarea[name="content"]');
+        const parentInput = document.getElementById('parent_id_input');
+        if (textarea) {
+            textarea.value = '@' + username + ' ';
+            if (parentInput) {
+                parentInput.value = commentId || '';
+            }
+            textarea.focus();
+            // Move cursor to end
+            const len = textarea.value.length;
+            textarea.setSelectionRange(len, len);
+            // Smoothly scroll to the input block
+            textarea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+            const loginLink = document.querySelector('a[href*="/login"]');
+            if (loginLink) loginLink.click();
+        }
+    }
+</script>
+
+{% endblock %}

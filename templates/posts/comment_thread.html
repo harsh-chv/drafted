@@ -1,0 +1,50 @@
+{% load humanize %}{% load comment_tags %}
+
+{% for comment in comments %}
+<div class="relative group mt-1 bg-transparent">
+    <!-- Header -->
+    <div class="flex items-center gap-2 mb-1 pl-1">
+        <div class="w-7 h-7 rounded-full bg-white dark:bg-black border border-[#EFF3F4] dark:border-[#2F3336] flex items-center justify-center text-[10px] font-bold text-[#536471] dark:text-[#71767B] flex-shrink-0 overflow-hidden z-10">
+            {% if comment.author.avatar %}<img src="{{ comment.author.avatar.url }}" class="w-full h-full object-cover">{% else %}{{ comment.author.username|first|upper }}{% endif %}
+        </div>
+        <div class="flex items-baseline gap-1.5">
+            <span class="font-bold text-[13px] text-[#0F1419] dark:text-[#E7E9EA] hover:underline cursor-pointer">{{ comment.author.username }}</span>
+            <span class="text-[#536471] dark:text-[#71767B] text-[11px]">• {{ comment.created_at|naturaltime }}</span>
+        </div>
+    </div>
+
+    <!-- Body & Thread Line -->
+    <div class="ml-2 sm:ml-[16px] pl-2 sm:pl-[16px] relative border-l-2 border-[#EDEFF1] dark:border-[#343536] group-hover:border-[#D7DADD] dark:group-hover:border-[#4D4E50] border-solid pb-2 transition-colors">
+        
+        <div class="text-[14px] leading-relaxed text-[#0F1419] dark:text-[#E7E9EA] pt-1 mb-1.5 break-words w-full">{{ comment.content|render_mentions }}</div>
+        
+            <!-- Actions -->
+            <div class="flex items-center gap-3 -ml-2 text-[#536471] dark:text-[#71767B]">
+                <button data-comment-id="{{ comment.id }}" onclick="toggleCommentLike('{{ comment.id }}', this)" class="flex items-center gap-1.5 hover:bg-[#F91880]/10 py-1 px-2 rounded-full transition-colors text-[12px] font-bold cursor-pointer bg-transparent border-none font-sans {% if comment.id in liked_comment_ids %}text-[#F91880]{% else %}text-[#536471] dark:text-[#71767B]{% endif %} hover:text-[#F91880] dark:hover:text-[#F91880]">
+                    <svg viewBox="0 0 24 24" class="w-[15px] h-[15px]" fill="{% if comment.id in liked_comment_ids %}currentColor{% else %}none{% endif %}" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                    <span class="comment-like-count">{% if comment.like_count > 0 %}{{ comment.like_count }}{% else %}Like{% endif %}</span>
+                </button>
+                
+                <button onclick="replyToUser('{{ comment.author.username }}', '{{ comment.id }}')" class="flex items-center gap-1.5 hover:bg-black/5 dark:hover:bg-white/5 py-1 px-2 rounded-full transition-colors text-[12px] font-bold cursor-pointer bg-transparent border-none font-sans text-[#536471] dark:text-[#71767B]">
+                    <svg viewBox="0 0 24 24" class="w-[14px] h-[14px]" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    Reply
+                </button>
+            {% if request.user == comment.author or request.user.is_admin_role %}
+            <form method="POST" action="{% url 'interactions:comment_delete' comment_id=comment.pk %}" class="inline-block ml-1">
+                {% csrf_token %}
+                <button type="submit" onclick="return confirm('Delete this comment?')" class="flex items-center hover:bg-red-500/10 p-1.5 rounded-full transition-colors text-[#F4212E] cursor-pointer bg-transparent border-none">
+                    <svg viewBox="0 0 24 24" class="w-[14px] h-[14px]" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                </button>
+            </form>
+            {% endif %}
+        </div>
+        
+        <!-- Recursively include replies -->
+        {% if comment.replies.all %}
+            <div class="mt-2 text-sm z-20">
+                {% include "posts/comment_thread.html" with comments=comment.replies.all liked_comment_ids=liked_comment_ids %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endfor %}

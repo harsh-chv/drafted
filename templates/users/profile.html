@@ -1,0 +1,402 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}{{ profile_user.username }} — Drafted{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ── Overlay (Followers / Following) ── */
+    .overlay-backdrop {
+        position: fixed; inset: 0; z-index: 100;
+        background: rgba(0,0,0,0.5);
+        display: none; align-items: flex-start; justify-content: center;
+        padding-top: max(10vh, 60px);
+        animation: fadeIn 0.15s ease;
+    }
+    .overlay-backdrop.active { display: flex; }
+    .overlay-panel {
+        background: #fff; border-radius: 16px;
+        width: 90%; max-width: 400px; max-height: 70vh;
+        overflow: hidden; display: flex; flex-direction: column;
+        animation: slideUp 0.2s ease;
+    }
+    [data-theme="dark"] .overlay-panel { background: #16181C; }
+    .overlay-header {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 16px; border-bottom: 1px solid #EFF3F4;
+    }
+    [data-theme="dark"] .overlay-header { border-color: #2F3336; }
+    .overlay-header h3 { font-size: 18px; font-weight: 800; margin: 0; }
+    .overlay-close {
+        width: 34px; height: 34px; border-radius: 50%;
+        border: none; background: transparent; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        color: #0F1419; transition: background 0.15s;
+    }
+    [data-theme="dark"] .overlay-close { color: #E7E9EA; }
+    .overlay-close:hover { background: rgba(0,0,0,0.06); }
+    [data-theme="dark"] .overlay-close:hover { background: rgba(255,255,255,0.06); }
+    .overlay-body { overflow-y: auto; flex: 1; }
+    .overlay-user {
+        display: flex; align-items: center; gap: 12px;
+        padding: 12px 16px; text-decoration: none; color: inherit;
+        transition: background 0.15s;
+    }
+    .overlay-user:hover { background: rgba(0,0,0,0.03); }
+    [data-theme="dark"] .overlay-user:hover { background: rgba(255,255,255,0.03); }
+    .overlay-avatar {
+        width: 40px; height: 40px; border-radius: 50%;
+        background: #F7F9F9; flex-shrink: 0; overflow: hidden;
+        display: flex; align-items: center; justify-content: center;
+        font-weight: 700; font-size: 14px; color: #536471;
+    }
+    [data-theme="dark"] .overlay-avatar { background: #2F3336; color: #71767B; }
+    .overlay-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .overlay-empty {
+        padding: 40px 16px; text-align: center;
+        color: #536471; font-size: 15px;
+    }
+    [data-theme="dark"] .overlay-empty { color: #71767B; }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+
+    /* ── Profile Tab Styles ── */
+    .profile-tab { position: relative; }
+    .profile-tab.active { color: #0F1419 !important; font-weight: 700; }
+    [data-theme="dark"] .profile-tab.active { color: #E7E9EA !important; }
+    .profile-tab .tab-indicator {
+        position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+        width: 56px; height: 4px; border-radius: 9999px;
+        background: #1D9BF0; display: none;
+    }
+    .profile-tab.active .tab-indicator { display: block; }
+
+    /* ── Reply Card ── */
+    .reply-card {
+        display: flex; gap: 12px; padding: 12px 16px;
+        border-bottom: 1px solid #EFF3F4;
+        transition: background 0.15s;
+    }
+    [data-theme="dark"] .reply-card { border-color: #2F3336; }
+    .reply-card:hover { background: rgba(0,0,0,0.02); }
+    [data-theme="dark"] .reply-card:hover { background: rgba(255,255,255,0.02); }
+    .reply-context {
+        font-size: 13px; color: #536471; margin-bottom: 4px;
+        display: flex; align-items: center; gap: 4px;
+    }
+    [data-theme="dark"] .reply-context { color: #71767B; }
+    .reply-context a { color: #1D9BF0; text-decoration: none; }
+    .reply-context a:hover { text-decoration: underline; }
+
+    /* ── Stats row clickable ── */
+    .stat-link {
+        cursor: pointer; transition: all 0.15s;
+        padding: 2px 4px; margin: -2px -4px;
+        border-radius: 6px;
+    }
+    .stat-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Back Header -->
+<div class="sticky top-0 z-40 bg-white/80 dark:bg-black/80 backdrop-blur-xl px-4 py-1 flex items-center gap-6 border-b border-[#EFF3F4] dark:border-[#2F3336]">
+    <a href="{% url 'posts:home' %}" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-[#0F1419] dark:text-[#E7E9EA]">
+        <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor"><path d="M7.414 13l5.043 5.04-1.414 1.42L3.586 12l7.457-7.46 1.414 1.42L7.414 11H21v2H7.414z"/></svg>
+    </a>
+    <div>
+        <h1 class="text-xl font-extrabold leading-tight">{{ profile_user.get_full_name|default:profile_user.username }}</h1>
+        <p class="text-[13px] text-[#536471] dark:text-[#71767B] m-0">{{ posts|length }} post{{ posts|length|pluralize }}</p>
+    </div>
+</div>
+
+<!-- Banner -->
+<div class="h-48 bg-gradient-to-br from-[#1D9BF0]/30 via-[#1D9BF0]/10 to-[#CFD9DE] dark:from-[#1D9BF0]/20 dark:via-[#16181C] dark:to-[#333639] w-full"></div>
+
+<!-- Profile Info -->
+<div class="px-4 relative pb-3 border-b border-[#EFF3F4] dark:border-[#2F3336]">
+    <!-- Avatar -->
+    <div class="absolute -top-16 left-4 w-[133px] h-[133px] rounded-full border-4 border-white dark:border-black bg-[#F7F9F9] dark:bg-[#16181C] overflow-hidden">
+        {% if profile_user.avatar %}
+            <img src="{{ profile_user.avatar.url }}" class="w-full h-full object-cover">
+        {% else %}
+            <div class="w-full h-full flex items-center justify-center text-5xl font-bold text-[#536471] dark:text-[#71767B]">{{ profile_user.username|first|upper }}</div>
+        {% endif %}
+    </div>
+
+    <!-- Edit / Follow button -->
+    <div class="flex justify-end gap-2 pt-3 mb-16">
+        {% if user == profile_user %}
+            <a href="{% url 'users:profile_edit' %}" class="px-4 py-2 rounded-full border border-[#CFD9DE] dark:border-[#536471] font-bold text-[15px] text-[#0F1419] dark:text-[#E7E9EA] no-underline hover:bg-black/5 dark:hover:bg-white/5 transition-colors">Edit profile</a>
+            <a href="{% url 'users:logout' %}" class="px-4 py-2 rounded-full border border-[#CFD9DE] dark:border-[#536471] font-bold text-[15px] text-[#F4212E] no-underline hover:bg-red-500/10 hover:border-red-500/50 transition-colors flex items-center gap-1.5">
+                <svg viewBox="0 0 24 24" class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                Log out
+            </a>
+        {% elif user.is_authenticated %}
+            <form method="POST" action="{% url 'interactions:follow_toggle' username=profile_user.username %}">
+                {% csrf_token %}
+                {% if is_following %}
+                    <button type="submit" class="px-5 py-2 rounded-full border border-[#CFD9DE] dark:border-[#536471] font-bold text-[15px] text-[#0F1419] dark:text-[#E7E9EA] bg-transparent cursor-pointer hover:border-red-500/50 hover:text-[#F4212E] hover:bg-red-500/10 transition-colors font-sans group">
+                        <span class="group-hover:hidden">Following</span>
+                        <span class="hidden group-hover:inline">Unfollow</span>
+                    </button>
+                {% else %}
+                    <button type="submit" class="px-5 py-2 rounded-full bg-[#0F1419] dark:bg-[#EFF3F4] text-white dark:text-[#0F1419] font-bold text-[15px] border-none cursor-pointer hover:opacity-90 transition-opacity font-sans">Follow</button>
+                {% endif %}
+            </form>
+        {% endif %}
+    </div>
+
+    <!-- Name & Bio -->
+    <h2 class="text-xl font-extrabold leading-tight mb-0">{{ profile_user.get_full_name|default:profile_user.username }}</h2>
+    <p class="text-[#536471] dark:text-[#71767B] text-[15px] mb-3">@{{ profile_user.username }}</p>
+
+    {% if profile_user.bio %}
+    <p class="text-[15px] leading-relaxed mb-3 text-[#0F1419] dark:text-[#E7E9EA]">{{ profile_user.bio }}</p>
+    {% endif %}
+
+    <!-- Meta Info -->
+    <div class="flex flex-wrap gap-x-4 gap-y-1 text-[#536471] dark:text-[#71767B] text-[15px] mb-3">
+        {% if profile_user.website %}
+        <span class="flex items-center gap-1">
+            <svg viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            <a href="{{ profile_user.website }}" target="_blank" class="text-xblue no-underline hover:underline">{{ profile_user.website|truncatechars:25 }}</a>
+        </span>
+        {% endif %}
+        <span class="flex items-center gap-1">
+            <svg viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            Joined {{ profile_user.date_joined|date:"F Y" }}
+        </span>
+    </div>
+
+    <!-- Following / Followers (clickable) -->
+    <div class="flex gap-5 text-[15px]">
+        <span class="stat-link" onclick="document.getElementById('followingOverlay').classList.add('active')">
+            <strong class="text-[#0F1419] dark:text-[#E7E9EA]">{{ profile_user.following_count }}</strong>
+            <span class="text-[#536471] dark:text-[#71767B]">Following</span>
+        </span>
+        <span class="stat-link" onclick="document.getElementById('followersOverlay').classList.add('active')">
+            <strong class="text-[#0F1419] dark:text-[#E7E9EA]">{{ profile_user.follower_count }}</strong>
+            <span class="text-[#536471] dark:text-[#71767B]">Followers</span>
+        </span>
+    </div>
+</div>
+
+<!-- ═══════════ TABS ═══════════ -->
+<div class="flex border-b border-[#EFF3F4] dark:border-[#2F3336]" id="profileTabs">
+    <a href="?tab=posts" class="profile-tab flex-1 text-center py-4 text-[15px] text-[#536471] dark:text-[#71767B] no-underline hover:bg-black/[0.03] dark:hover:bg-white/[0.03] transition-colors {% if active_tab == 'posts' %}active{% endif %}">
+        Posts
+        <div class="tab-indicator"></div>
+    </a>
+    <a href="?tab=replies" class="profile-tab flex-1 text-center py-4 text-[15px] text-[#536471] dark:text-[#71767B] no-underline hover:bg-black/[0.03] dark:hover:bg-white/[0.03] transition-colors {% if active_tab == 'replies' %}active{% endif %}">
+        Replies
+        <div class="tab-indicator"></div>
+    </a>
+    <a href="?tab=likes" class="profile-tab flex-1 text-center py-4 text-[15px] text-[#536471] dark:text-[#71767B] no-underline hover:bg-black/[0.03] dark:hover:bg-white/[0.03] transition-colors {% if active_tab == 'likes' %}active{% endif %}">
+        Likes
+        <div class="tab-indicator"></div>
+    </a>
+</div>
+
+<!-- ═══════════ TAB: POSTS ═══════════ -->
+{% if active_tab == 'posts' %}
+    {% if posts %}
+    <div class="x-post-feed">
+        {% for post in posts %}
+        <a href="{% url 'posts:detail' slug=post.slug %}" class="post-card flex gap-3 px-4 py-3 border-b border-[#EFF3F4] dark:border-[#2F3336] hover:bg-black/[0.03] dark:hover:bg-white/[0.03] transition-colors no-underline text-inherit cursor-pointer">
+            <div class="w-10 h-10 rounded-full bg-[#F7F9F9] dark:bg-[#16181C] flex items-center justify-center text-sm font-bold text-[#536471] dark:text-[#71767B] flex-shrink-0 overflow-hidden">
+                {% if post.author.avatar %}<img src="{{ post.author.avatar.url }}" class="w-full h-full object-cover rounded-full">{% else %}{{ post.author.username|first|upper }}{% endif %}
+            </div>
+            <div class="flex-1 min-w-0">
+                <div class="flex items-baseline gap-1 flex-wrap mb-0.5">
+                    <span class="font-bold text-[15px] text-[#0F1419] dark:text-[#E7E9EA]">{{ post.author.username }}</span>
+                    <span class="text-[#536471] dark:text-[#71767B] text-[15px]">@{{ post.author.username|lower }}</span>
+                    <span class="text-[#536471] dark:text-[#71767B]">·</span>
+                    <span class="text-[#536471] dark:text-[#71767B] text-[15px]">{{ post.created_at|naturaltime }}</span>
+                </div>
+                <div class="text-[15px] leading-relaxed mb-3">
+                    <strong class="block mb-1 text-[#0F1419] dark:text-[#E7E9EA]">{{ post.title }}</strong>
+                    <span class="text-[#536471] dark:text-[#71767B]">{{ post.content|truncatewords:30 }}</span>
+                </div>
+                {% if post.cover_image %}
+                <div class="mb-3 rounded-2xl overflow-hidden border border-[#EFF3F4] dark:border-[#2F3336]"><img src="{{ post.cover_image.url }}" class="w-full block" loading="lazy"></div>
+                {% endif %}
+                <div class="flex gap-6 -ml-2 mt-1 items-center">
+                    <span class="x-action-btn x-action-reply flex items-center gap-1.5" title="Replies">
+                        <svg viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                        <span>{{ post.comment_count }}</span>
+                    </span>
+                    <span class="x-action-btn x-action-like flex items-center gap-1.5 {% if post.pk in liked_post_ids %}liked{% endif %}" title="Likes">
+                        <svg viewBox="0 0 24 24" class="w-[18px] h-[18px]" {% if post.pk in liked_post_ids %}fill="currentColor"{% else %}fill="none" stroke="currentColor" stroke-width="2"{% endif %}><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                        <span>{{ post.like_count }}</span>
+                    </span>
+                    <button type="button" onclick="copyPostLink('{% url 'posts:detail' slug=post.slug %}', event)" class="x-action-btn border-none bg-transparent m-0 cursor-pointer hover:text-xblue flex items-center gap-1.5 transition-colors" title="Share Post">
+                        <svg viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+                    </button>
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="py-16 px-6 text-center">
+        <h3 class="text-2xl font-extrabold mb-2">@{{ profile_user.username }} hasn't posted</h3>
+        <p class="text-[#536471] dark:text-[#71767B] text-[15px]">When they do, their posts will show up here.</p>
+    </div>
+    {% endif %}
+{% endif %}
+
+<!-- ═══════════ TAB: REPLIES ═══════════ -->
+{% if active_tab == 'replies' %}
+    {% if user_comments %}
+    <div>
+        {% for comment in user_comments %}
+        <div class="reply-card">
+            <div class="w-10 h-10 rounded-full bg-[#F7F9F9] dark:bg-[#16181C] flex items-center justify-center text-sm font-bold text-[#536471] dark:text-[#71767B] flex-shrink-0 overflow-hidden">
+                {% if profile_user.avatar %}<img src="{{ profile_user.avatar.url }}" class="w-full h-full object-cover rounded-full">{% else %}{{ profile_user.username|first|upper }}{% endif %}
+            </div>
+            <div class="flex-1 min-w-0">
+                <div class="reply-context">
+                    <svg viewBox="0 0 24 24" class="w-[14px] h-[14px] flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    Replying to <a href="{% url 'posts:detail' slug=comment.post.slug %}">{{ comment.post.title|truncatewords:6 }}</a>
+                    <span>· {{ comment.created_at|naturaltime }}</span>
+                </div>
+                <div class="flex items-baseline gap-1 mb-1">
+                    <span class="font-bold text-[15px] text-[#0F1419] dark:text-[#E7E9EA]">{{ profile_user.username }}</span>
+                    <span class="text-[#536471] dark:text-[#71767B] text-[13px]">@{{ profile_user.username }}</span>
+                </div>
+                <p class="text-[15px] text-[#0F1419] dark:text-[#E7E9EA] leading-relaxed m-0">{{ comment.content }}</p>
+                <!-- Link to original post -->
+                <a href="{% url 'posts:detail' slug=comment.post.slug %}" class="inline-flex items-center gap-1.5 mt-2 text-[13px] text-xblue no-underline hover:underline">
+                    <svg viewBox="0 0 24 24" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                    View post
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="py-16 px-6 text-center">
+        <h3 class="text-2xl font-extrabold mb-2">No replies yet</h3>
+        <p class="text-[#536471] dark:text-[#71767B] text-[15px]">When @{{ profile_user.username }} replies to a post, it'll show up here.</p>
+    </div>
+    {% endif %}
+{% endif %}
+
+<!-- ═══════════ TAB: LIKES ═══════════ -->
+{% if active_tab == 'likes' %}
+    {% if user_liked_posts %}
+    <div class="x-post-feed">
+        {% for like in user_liked_posts %}
+        <a href="{% url 'posts:detail' slug=like.post.slug %}" class="post-card flex gap-3 px-4 py-3 border-b border-[#EFF3F4] dark:border-[#2F3336] hover:bg-black/[0.03] dark:hover:bg-white/[0.03] transition-colors no-underline text-inherit cursor-pointer">
+            <!-- Liked indicator -->
+            <div class="w-10 flex flex-col items-center gap-1 flex-shrink-0">
+                <div class="w-10 h-10 rounded-full bg-[#F7F9F9] dark:bg-[#16181C] flex items-center justify-center text-sm font-bold text-[#536471] dark:text-[#71767B] overflow-hidden">
+                    {% if like.post.author.avatar %}<img src="{{ like.post.author.avatar.url }}" class="w-full h-full object-cover rounded-full">{% else %}{{ like.post.author.username|first|upper }}{% endif %}
+                </div>
+            </div>
+            <div class="flex-1 min-w-0">
+                <!-- Liked badge -->
+                <div class="flex items-center gap-1.5 text-[13px] text-[#F91880] mb-1">
+                    <svg viewBox="0 0 24 24" class="w-3.5 h-3.5" fill="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                    <span>{{ profile_user.username }} liked</span>
+                </div>
+                <div class="flex items-baseline gap-1 flex-wrap mb-0.5">
+                    <span class="font-bold text-[15px] text-[#0F1419] dark:text-[#E7E9EA]">{{ like.post.author.username }}</span>
+                    <span class="text-[#536471] dark:text-[#71767B] text-[15px]">@{{ like.post.author.username|lower }}</span>
+                    <span class="text-[#536471] dark:text-[#71767B]">·</span>
+                    <span class="text-[#536471] dark:text-[#71767B] text-[15px]">{{ like.post.created_at|naturaltime }}</span>
+                </div>
+                <div class="text-[15px] leading-relaxed mb-2">
+                    <strong class="block mb-1 text-[#0F1419] dark:text-[#E7E9EA]">{{ like.post.title }}</strong>
+                    <span class="text-[#536471] dark:text-[#71767B]">{{ like.post.content|truncatewords:25 }}</span>
+                </div>
+                {% if like.post.cover_image %}
+                <div class="mb-2 rounded-2xl overflow-hidden border border-[#EFF3F4] dark:border-[#2F3336]"><img src="{{ like.post.cover_image.url }}" class="w-full block" loading="lazy"></div>
+                {% endif %}
+                <div class="flex gap-6 -ml-2 mt-1">
+                    <span class="x-action-btn x-action-reply">
+                        <svg viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                        <span>{{ like.post.comment_count }}</span>
+                    </span>
+                    <span class="x-action-btn x-action-like liked">
+                        <svg viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                        <span>{{ like.post.like_count }}</span>
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="py-16 px-6 text-center">
+        <h3 class="text-2xl font-extrabold mb-2">No likes yet</h3>
+        <p class="text-[#536471] dark:text-[#71767B] text-[15px]">When @{{ profile_user.username }} likes a post, it'll show up here.</p>
+    </div>
+    {% endif %}
+{% endif %}
+
+<!-- ═══════════ FOLLOWING OVERLAY ═══════════ -->
+<div class="overlay-backdrop" id="followingOverlay" onclick="if(event.target===this)this.classList.remove('active')">
+    <div class="overlay-panel">
+        <div class="overlay-header">
+            <h3>Following</h3>
+            <button class="overlay-close" onclick="document.getElementById('followingOverlay').classList.remove('active')">
+                <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor"><path d="M10.59 12L4.54 5.96l1.42-1.42L12 10.59l6.04-6.05 1.42 1.42L13.41 12l6.05 6.04-1.42 1.42L12 13.41l-6.04 6.05-1.42-1.42L10.59 12z"/></svg>
+            </button>
+        </div>
+        <div class="overlay-body">
+            {% if following_list %}
+                {% for follow in following_list %}
+                <a href="{% url 'users:profile' username=follow.following.username %}" class="overlay-user">
+                    <div class="overlay-avatar">
+                        {% if follow.following.avatar %}<img src="{{ follow.following.avatar.url }}">{% else %}{{ follow.following.username|first|upper }}{% endif %}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="font-bold text-[15px] text-[#0F1419] dark:text-[#E7E9EA] truncate">{{ follow.following.get_full_name|default:follow.following.username }}</div>
+                        <div class="text-[13px] text-[#536471] dark:text-[#71767B] truncate">@{{ follow.following.username }}</div>
+                    </div>
+                </a>
+                {% endfor %}
+            {% else %}
+                <div class="overlay-empty">
+                    <p>@{{ profile_user.username }} isn't following anyone yet.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════ FOLLOWERS OVERLAY ═══════════ -->
+<div class="overlay-backdrop" id="followersOverlay" onclick="if(event.target===this)this.classList.remove('active')">
+    <div class="overlay-panel">
+        <div class="overlay-header">
+            <h3>Followers</h3>
+            <button class="overlay-close" onclick="document.getElementById('followersOverlay').classList.remove('active')">
+                <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor"><path d="M10.59 12L4.54 5.96l1.42-1.42L12 10.59l6.04-6.05 1.42 1.42L13.41 12l6.05 6.04-1.42 1.42L12 13.41l-6.04 6.05-1.42-1.42L10.59 12z"/></svg>
+            </button>
+        </div>
+        <div class="overlay-body">
+            {% if followers_list %}
+                {% for follow in followers_list %}
+                <a href="{% url 'users:profile' username=follow.follower.username %}" class="overlay-user">
+                    <div class="overlay-avatar">
+                        {% if follow.follower.avatar %}<img src="{{ follow.follower.avatar.url }}">{% else %}{{ follow.follower.username|first|upper }}{% endif %}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="font-bold text-[15px] text-[#0F1419] dark:text-[#E7E9EA] truncate">{{ follow.follower.get_full_name|default:follow.follower.username }}</div>
+                        <div class="text-[13px] text-[#536471] dark:text-[#71767B] truncate">@{{ follow.follower.username }}</div>
+                    </div>
+                </a>
+                {% endfor %}
+            {% else %}
+                <div class="overlay-empty">
+                    <p>@{{ profile_user.username }} doesn't have any followers yet.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}
