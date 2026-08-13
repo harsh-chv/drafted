@@ -73,8 +73,9 @@ def home_view(request):
     # Get posts the current user has liked (for heart icon state)
     liked_post_ids = set()
     if request.user.is_authenticated:
+        page_post_ids = [post.id for post in page_obj.object_list]
         liked_post_ids = set(
-            Like.objects.filter(user=request.user, post__in=page_obj.object_list)
+            Like.objects.filter(user=request.user, post_id__in=page_post_ids)
             .values_list('post_id', flat=True)
         )
 
@@ -287,8 +288,9 @@ def explore_view(request):
     # Get posts the current user has liked (for heart icon state)
     liked_post_ids = set()
     if request.user.is_authenticated:
+        page_post_ids = [post.id for post in page_obj.object_list]
         liked_post_ids = set(
-            Like.objects.filter(user=request.user, post__in=page_obj.object_list)
+            Like.objects.filter(user=request.user, post_id__in=page_post_ids)
             .values_list('post_id', flat=True)
         )
 
@@ -305,4 +307,3 @@ def explore_view(request):
         'liked_post_ids': liked_post_ids,
     }
     return render(request, 'posts/explore.html', context)
-

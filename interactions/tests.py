@@ -6,12 +6,14 @@ from django.urls import reverse
 
 from interactions.models import Bookmark, Comment, Follow, Like
 from posts.models import Post
+from posts.models import Tag
 from users.models import EmailOTP, User
 
 
 @override_settings(
     ALLOWED_HOSTS=['testserver'],
     EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+    STATICFILES_STORAGE='django.contrib.staticfiles.storage.StaticFilesStorage',
 )
 class CoreFlowTests(TestCase):
     def setUp(self):
@@ -114,6 +116,26 @@ class CoreFlowTests(TestCase):
         unliked_response = self.client.post(url)
         self.assertFalse(unliked_response.json()['liked'])
         self.assertEqual(Like.objects.count(), 0)
+
+    def test_like_toggle_view_returns_ajax_count(self):
+        self.client.force_login(self.reader)
+        response = self.client.post(
+            reverse('interactions:like_toggle', args=[self.post.id]),
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {'liked': True, 'like_count': 1})
+
+    def test_home_tag_filter_loads_for_authenticated_user(self):
+        tag = Tag.objects.create(name='onepiece')
+        self.post.tags.add(tag)
+        self.client.force_login(self.reader)
+
+        response = self.client.get(reverse('posts:home'), {'tag': tag.slug})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.post.title)
 
     def test_comment_api_adds_comment(self):
         self.client.force_login(self.reader)

@@ -99,17 +99,17 @@
                 </a>
                 
                 {% if user.is_authenticated %}
-                <form method="POST" action="{% url 'interactions:like_toggle' post_id=post.pk %}" class="inline m-0 p-0">
+                <form method="POST" action="{% url 'interactions:like_toggle' post_id=post.pk %}" class="inline m-0 p-0" data-like-form data-post-id="{{ post.pk }}">
                     {% csrf_token %}
                     <button type="submit" title="Like" class="x-action-btn x-action-like border-none bg-transparent m-0 cursor-pointer flex items-center gap-1.5 {% if post.pk in liked_post_ids %}liked{% endif %}" onclick="event.stopPropagation(); this.querySelector('svg').classList.add('like-animate')">
                         <svg viewBox="0 0 24 24" class="w-[18px] h-[18px]" {% if post.pk in liked_post_ids %}fill="currentColor"{% else %}fill="none" stroke="currentColor" stroke-width="2"{% endif %}><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                        <span>{{ post.like_count }} Likes</span>
+                        <span data-like-count="{{ post.pk }}">{{ post.like_count }} Likes</span>
                     </button>
                 </form>
                 {% else %}
                 <span class="x-action-btn x-action-like flex items-center gap-1.5" title="Like">
                     <svg viewBox="0 0 24 24" class="w-[18px] h-[18px]" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                    <span>{{ post.like_count }} Likes</span>
+                    <span data-like-count="{{ post.pk }}">{{ post.like_count }} Likes</span>
                 </span>
                 {% endif %}
 
@@ -159,5 +159,4 @@
 {% endif %}
 
 {% endblock %}
-
 

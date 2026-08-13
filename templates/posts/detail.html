@@ -85,7 +85,7 @@
     <!-- Engagement Stats -->
     <div class="flex gap-5 py-3 border-b border-[#EFF3F4] dark:border-[#2F3336] text-[15px]">
         <span><strong class="text-[#0F1419] dark:text-[#E7E9EA]">{{ post.comment_count }}</strong> <span class="text-[#536471] dark:text-[#71767B]">Replies</span></span>
-        <span><strong class="text-[#0F1419] dark:text-[#E7E9EA]">{{ post.like_count }}</strong> <span class="text-[#536471] dark:text-[#71767B]">Likes</span></span>
+        <span><strong class="text-[#0F1419] dark:text-[#E7E9EA]" data-like-count="{{ post.pk }}" data-like-count-format="number">{{ post.like_count }}</strong> <span class="text-[#536471] dark:text-[#71767B]">Likes</span></span>
     </div>
 
     <!-- Action Buttons -->
@@ -94,7 +94,7 @@
             <svg viewBox="0 0 24 24" class="w-[22px] h-[22px]" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
         </span>
         {% if user.is_authenticated %}
-        <form method="POST" action="{% url 'interactions:like_toggle' post_id=post.pk %}" class="inline">
+        <form method="POST" action="{% url 'interactions:like_toggle' post_id=post.pk %}" class="inline" data-like-form data-post-id="{{ post.pk }}">
             {% csrf_token %}
             <button type="submit" title="Like" class="x-action-btn x-action-like p-3 flex items-center gap-1.5 border-none bg-transparent cursor-pointer {% if user_has_liked %}liked{% endif %}">
                 <svg viewBox="0 0 24 24" class="w-[22px] h-[22px]" {% if user_has_liked %}fill="currentColor"{% else %}fill="none" stroke="currentColor" stroke-width="2"{% endif %}><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>

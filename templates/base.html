@@ -434,8 +434,10 @@
 
             var btn = form.querySelector('button[title="Like"]');
             var svg = btn ? btn.querySelector('svg') : null;
-            var countSpan = btn ? btn.querySelector('span') : null;
-            var csrfToken = form.querySelector('[name=csrfmiddlewaretoken]').value;
+            var csrfInput = form.querySelector('[name=csrfmiddlewaretoken]');
+            var csrfToken = csrfInput ? csrfInput.value : '';
+            var postId = form.getAttribute('data-post-id');
+            if (btn) btn.disabled = true;
 
             fetch(form.action, {
                 method: 'POST',
@@ -447,21 +449,44 @@
             })
             .then(function(r) { return r.json(); })
             .then(function(data) {
+                if (btn) btn.disabled = false;
                 // Update icon state
-                if (data.liked) {
-                    btn.classList.add('liked');
-                    svg.setAttribute('fill', 'currentColor');
-                    svg.removeAttribute('stroke');
-                    svg.removeAttribute('stroke-width');
-                } else {
-                    btn.classList.remove('liked');
-                    svg.setAttribute('fill', 'none');
-                    svg.setAttribute('stroke', 'currentColor');
-                    svg.setAttribute('stroke-width', '2');
+                if (btn) {
+                    if (data.liked) {
+                        btn.classList.add('liked');
+                    } else {
+                        btn.classList.remove('liked');
+                    }
                 }
-                // Update count
-                if (countSpan) {
-                    countSpan.textContent = data.like_count + ' Likes';
+                if (svg) {
+                    if (data.liked) {
+                        svg.setAttribute('fill', 'currentColor');
+                        svg.removeAttribute('stroke');
+                        svg.removeAttribute('stroke-width');
+                    } else {
+                        svg.setAttribute('fill', 'none');
+                        svg.setAttribute('stroke', 'currentColor');
+                        svg.setAttribute('stroke-width', '2');
+                    }
+                }
+                // Update all visible counters for the same post.
+                var selector = postId ? '[data-like-count="' + postId + '"]' : '[data-like-count]';
+                document.querySelectorAll(selector).forEach(function(el) {
+                    var count = Number(data.like_count) || 0;
+                    if (el.getAttribute('data-like-count-format') === 'number') {
+                        el.textContent = count;
+                    } else {
+                        el.textContent = count + ' ' + (count === 1 ? 'Like' : 'Likes');
+                    }
+                });
+
+                // Fallback for older markup with count inside the button.
+                if (btn) {
+                    var countSpan = btn.querySelector('span');
+                    if (countSpan && !countSpan.hasAttribute('data-like-count')) {
+                        var count = Number(data.like_count) || 0;
+                        countSpan.textContent = count + ' ' + (count === 1 ? 'Like' : 'Likes');
+                    }
                 }
                 // Animate heart
                 if (svg) {
@@ -471,6 +496,7 @@
                 }
             })
             .catch(function(err) {
+                if (btn) btn.disabled = false;
                 console.error('Like error:', err);
                 form.submit(); // fallback to normal submit
             });
