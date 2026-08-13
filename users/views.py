@@ -171,7 +171,7 @@ def logout_view(request):
     """Handle user logout."""
     logout(request)
     messages.info(request, 'You have been logged out.')
-    return redirect('posts:home')
+    return redirect('users:login')
 
 
 def profile_view(request, username):
