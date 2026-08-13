@@ -50,6 +50,10 @@ railway_domain = os.environ.get('RAILWAY_PUBLIC_DOMAIN')
 if railway_domain:
     CSRF_TRUSTED_ORIGINS.append(f'https://{railway_domain}')
 
+# Hardcode known Railway domain as safety net
+if 'https://drafted-chv.up.railway.app' not in CSRF_TRUSTED_ORIGINS:
+    CSRF_TRUSTED_ORIGINS.append('https://drafted-chv.up.railway.app')
+
 # ──────────────────────────────────────────────
 # Application definition
 # ──────────────────────────────────────────────

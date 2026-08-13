@@ -1,3 +1,5 @@
+import logging
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
@@ -9,6 +11,8 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from .forms import UserRegisterForm, UserLoginForm, UserUpdateForm
 from .models import User, EmailOTP
 from interactions.models import Follow, Like
+
+logger = logging.getLogger(__name__)
 
 
 def register_view(request):
@@ -51,7 +55,8 @@ def register_view(request):
                     fail_silently=False,
                 )
                 messages.info(request, f'A 6-digit OTP has been sent to {email}')
-            except Exception:
+            except Exception as e:
+                logger.error('Failed to send OTP email to %s: %s', email, e, exc_info=True)
                 user.delete()
                 request.session.pop('pending_user_id', None)
                 request.session.pop('reg_email', None)
@@ -139,7 +144,8 @@ def resend_otp_view(request):
             fail_silently=False,
         )
         messages.success(request, f'A new OTP has been sent to {email}')
-    except Exception:
+    except Exception as e:
+        logger.error('Failed to resend OTP email to %s: %s', email, e, exc_info=True)
         messages.error(request, 'Failed to resend OTP. Please try again.')
 
     return redirect('users:verify_otp')
