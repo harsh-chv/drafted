@@ -15,6 +15,13 @@ from interactions.models import Follow, Like
 logger = logging.getLogger(__name__)
 
 
+def _verification_context(request, email):
+    context = {'email': email}
+    if getattr(settings, 'ALLOW_DEMO_OTP_FALLBACK', False):
+        context['demo_otp_code'] = request.session.get('demo_otp_code')
+    return context
+
+
 def register_view(request):
     """Step 1: Collect user info and send OTP to email."""
     if request.user.is_authenticated:
@@ -45,7 +52,7 @@ def register_view(request):
             try:
                 html_message = render_to_string('users/email_otp.html', {'otp_code': otp_code})
                 send_mail(
-                    subject='WriteSphere — Your Verification Code',
+                    subject='Drafted - Your Verification Code',
                     message=f'Your OTP verification code is: {otp_code}\n\n'
                             f'This code expires in 5 minutes.\n\n'
                             f'If you did not request this, please ignore this email.',
@@ -57,10 +64,15 @@ def register_view(request):
                 messages.info(request, f'A 6-digit OTP has been sent to {email}')
             except Exception as e:
                 logger.error('Failed to send OTP email to %s: %s', email, e, exc_info=True)
+                if getattr(settings, 'ALLOW_DEMO_OTP_FALLBACK', False):
+                    request.session['demo_otp_code'] = otp_code
+                    messages.warning(request, 'Email delivery is unavailable on this deployment. Use the demo code shown below.')
+                    return redirect('users:verify_otp')
+
                 user.delete()
                 request.session.pop('pending_user_id', None)
                 request.session.pop('reg_email', None)
-                messages.error(request, f'Failed to send OTP: {e}')
+                messages.error(request, 'Failed to send OTP. Please try again later.')
                 return render(request, 'users/register.html', {'form': form})
 
             return redirect('users:verify_otp')
@@ -84,7 +96,7 @@ def verify_otp_view(request):
 
         if not entered_otp:
             messages.error(request, 'Please enter the OTP code.')
-            return render(request, 'users/verify_otp.html', {'email': email})
+            return render(request, 'users/verify_otp.html', _verification_context(request, email))
 
         # Find matching OTP
         try:
@@ -95,12 +107,12 @@ def verify_otp_view(request):
             ).latest('created_at')
         except EmailOTP.DoesNotExist:
             messages.error(request, 'Invalid OTP code. Please try again.')
-            return render(request, 'users/verify_otp.html', {'email': email})
+            return render(request, 'users/verify_otp.html', _verification_context(request, email))
 
         # Check expiry
         if otp_obj.is_expired:
             messages.error(request, 'OTP has expired. Please request a new one.')
-            return render(request, 'users/verify_otp.html', {'email': email})
+            return render(request, 'users/verify_otp.html', _verification_context(request, email))
 
         # OTP is valid — create the user
         otp_obj.is_verified = True
@@ -111,14 +123,14 @@ def verify_otp_view(request):
         user.save(update_fields=['is_active'])
 
         # Clean session
-        for key in ['pending_user_id', 'reg_email']:
+        for key in ['pending_user_id', 'reg_email', 'demo_otp_code']:
             request.session.pop(key, None)
 
         login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-        messages.success(request, f'Welcome to WriteSphere, {user.username}! Your email has been verified.')
+        messages.success(request, f'Welcome to Drafted, {user.username}! Your email has been verified.')
         return redirect('posts:home')
 
-    return render(request, 'users/verify_otp.html', {'email': email})
+    return render(request, 'users/verify_otp.html', _verification_context(request, email))
 
 
 def resend_otp_view(request):
@@ -135,7 +147,7 @@ def resend_otp_view(request):
     try:
         html_message = render_to_string('users/email_otp.html', {'otp_code': otp_code})
         send_mail(
-            subject='WriteSphere — Your New Verification Code',
+            subject='Drafted - Your New Verification Code',
             message=f'Your new OTP verification code is: {otp_code}\n\n'
                     f'This code expires in 5 minutes.',
             from_email=settings.EMAIL_HOST_USER,
@@ -146,7 +158,11 @@ def resend_otp_view(request):
         messages.success(request, f'A new OTP has been sent to {email}')
     except Exception as e:
         logger.error('Failed to resend OTP email to %s: %s', email, e, exc_info=True)
-        messages.error(request, 'Failed to resend OTP. Please try again.')
+        if getattr(settings, 'ALLOW_DEMO_OTP_FALLBACK', False):
+            request.session['demo_otp_code'] = otp_code
+            messages.warning(request, 'Email delivery is unavailable on this deployment. Use the new demo code shown below.')
+        else:
+            messages.error(request, 'Failed to resend OTP. Please try again.')
 
     return redirect('users:verify_otp')
 

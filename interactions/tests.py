@@ -1,4 +1,5 @@
 import json
+from unittest.mock import patch
 
 from django.test import TestCase, override_settings
 from django.urls import reverse
@@ -50,6 +51,22 @@ class CoreFlowTests(TestCase):
         self.assertEqual(response.status_code, 302)
         user.refresh_from_db()
         self.assertTrue(user.is_active)
+
+    @override_settings(ALLOW_DEMO_OTP_FALLBACK=True)
+    @patch('users.views.send_mail', side_effect=OSError('Network is unreachable'))
+    def test_registration_shows_demo_otp_when_email_fails(self, _send_mail):
+        response = self.client.post(reverse('users:register'), {
+            'username': 'demo_user',
+            'email': 'demo@example.com',
+            'password1': 'StrongPass123',
+            'password2': 'StrongPass123',
+        })
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('users:verify_otp'))
+        user = User.objects.get(username='demo_user')
+        self.assertFalse(user.is_active)
+        self.assertEqual(self.client.session['demo_otp_code'], EmailOTP.objects.get(email='demo@example.com').otp)
 
     def test_author_can_create_edit_and_delete_post_via_api(self):
         self.client.force_login(self.reader)

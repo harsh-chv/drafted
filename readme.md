@@ -55,3 +55,32 @@ source myenv/bin/activate
 cp .env.example .env
 ```
 
+## Environment Variables
+
+- `SECRET_KEY`
+- `DEBUG`
+- `ALLOWED_HOSTS`
+- `CSRF_TRUSTED_ORIGINS`
+- `DATABASE_URL`
+- `EMAIL_HOST_USER`
+- `EMAIL_HOST_PASSWORD`
+- `ALLOW_DEMO_OTP_FALLBACK`
+- `GOOGLE_CLIENT_ID`
+- `GOOGLE_CLIENT_SECRET`
+
+`ALLOW_DEMO_OTP_FALLBACK=True` is useful for portfolio/demo deployments where SMTP is blocked by the host. For a real production app, use a reliable email provider and set `ALLOW_DEMO_OTP_FALLBACK=False`.
+
+## Run Tests
+
+```bash
+python manage.py test
+```
+
+## Deployment
+
+1. Push the project to GitHub.
+2. Create a Railway project from the GitHub repository.
+3. Set `DEBUG=False`.
+4. Set `ALLOWED_HOSTS` and `CSRF_TRUSTED_ORIGINS` for your Railway domain.
+5. Add `DATABASE_URL` if using a Railway database service.
+6. Deploy. The `Procfile` runs migrations before starting Gunicorn.

@@ -20,6 +20,14 @@
                 </p>
             </div>
 
+            {% if demo_otp_code %}
+            <div class="mb-5 rounded-xl border border-[#1D9BF0]/30 bg-[#1D9BF0]/10 px-4 py-3 text-center">
+                <p class="text-xs font-bold uppercase tracking-[0.14em] text-[#8B98A5] mb-1">Demo verification code</p>
+                <p class="text-2xl font-extrabold tracking-[0.28em] text-[#E7E9EA]">{{ demo_otp_code }}</p>
+                <p class="mt-1 text-xs text-[#71767B]">Email sending is unavailable on this deployment.</p>
+            </div>
+            {% endif %}
+
             <form method="POST" class="text-left">
                 {% csrf_token %}
 
