@@ -40,6 +40,10 @@ ALLOWED_HOSTS = [
     if h.strip()
 ]
 
+# Trust Railway's reverse proxy X-Forwarded-Proto header
+# so Django knows the original request was HTTPS
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 CSRF_TRUSTED_ORIGINS = [
     o.strip()
     for o in os.environ.get('CSRF_TRUSTED_ORIGINS', 'http://localhost:8000').split(',')
