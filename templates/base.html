@@ -53,7 +53,7 @@
     <script>
     (function(){
         var msgs = [
-            {% for message in messages %}{ text: {{ message|escapejs|safe|default:"''" }}, tag: '{{ message.tags }}' },{% endfor %}
+            {% for message in messages %}{ text: '{{ message|escapejs }}', tag: '{{ message.tags }}' },{% endfor %}
         ];
         // We'll use the global showToast once it loads
         window._pendingToasts = msgs;

@@ -38,6 +38,17 @@
             <form method="POST" class="space-y-4">
                 {% csrf_token %}
 
+                {% if messages %}
+                {% for message in messages %}
+                <div class="rounded-xl px-4 py-3 text-sm font-medium
+                    {% if message.tags == 'error' %}bg-[#F4212E]/10 border border-[#F4212E]/30 text-[#FF7A85]
+                    {% elif message.tags == 'success' %}bg-[#00BA7C]/10 border border-[#00BA7C]/30 text-[#00BA7C]
+                    {% else %}bg-xblue/10 border border-xblue/30 text-xblue{% endif %}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+                {% endif %}
+
                 <div>
                     <label for="id_username" class="block text-[11px] font-bold uppercase tracking-[0.14em] text-[#8B98A5] mb-2">Username</label>
                     <input type="text" name="username" id="id_username" value="{{ form.username.value|default:'' }}" autofocus required autocomplete="username"

@@ -60,7 +60,7 @@ def register_view(request):
                 user.delete()
                 request.session.pop('pending_user_id', None)
                 request.session.pop('reg_email', None)
-                messages.error(request, 'Failed to send OTP. Please check your email settings and try again.')
+                messages.error(request, f'Failed to send OTP: {e}')
                 return render(request, 'users/register.html', {'form': form})
 
             return redirect('users:verify_otp')
