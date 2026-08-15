@@ -57,10 +57,16 @@ class UserUpdateForm(forms.ModelForm):
     """Profile update form."""
     class Meta:
         model = User
-        fields = ['username', 'email', 'bio', 'avatar', 'website', 'date_of_birth']
+        fields = ['first_name', 'last_name', 'bio', 'avatar', 'website', 'date_of_birth']
         widgets = {
-            'username': forms.TextInput(attrs={'class': 'form-control'}),
-            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'first_name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Your first name',
+            }),
+            'last_name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Your last name',
+            }),
             'bio': forms.Textarea(attrs={
                 'class': 'form-control',
                 'rows': 4,

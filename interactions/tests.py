@@ -1,6 +1,8 @@
 import json
+from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
@@ -136,6 +138,32 @@ class CoreFlowTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, self.post.title)
+
+    def test_profile_edit_saves_names_and_avatar(self):
+        self.client.force_login(self.reader)
+        avatar = SimpleUploadedFile(
+            'avatar.gif',
+            b'GIF87a\x01\x00\x01\x00\x80\x01\x00\x00\x00\x00\xff\xff\xff,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02L\x01\x00;',
+            content_type='image/gif',
+        )
+
+        with TemporaryDirectory() as media_root:
+            with override_settings(MEDIA_ROOT=media_root):
+                response = self.client.post(reverse('users:profile_edit'), {
+                    'first_name': 'Ved',
+                    'last_name': 'Patel',
+                    'bio': 'error dev',
+                    'website': 'https://example.com',
+                    'avatar': avatar,
+                })
+
+                self.assertEqual(response.status_code, 302)
+                self.reader.refresh_from_db()
+                self.assertEqual(self.reader.first_name, 'Ved')
+                self.assertEqual(self.reader.last_name, 'Patel')
+                self.assertEqual(self.reader.bio, 'error dev')
+                self.assertEqual(self.reader.website, 'https://example.com')
+                self.assertTrue(self.reader.avatar.name.startswith('avatars/'))
 
     def test_comment_api_adds_comment(self):
         self.client.force_login(self.reader)
