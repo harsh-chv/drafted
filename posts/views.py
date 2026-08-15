@@ -11,9 +11,12 @@ from interactions.forms import CommentForm
 from interactions.models import Like
 
 
-@login_required
 def home_view(request):
-    """Home page with blog listing, search, and filters."""
+    """Show a public introduction or the signed-in user's feed."""
+    if not request.user.is_authenticated:
+        return render(request, 'posts/landing.html')
+
+    # Authenticated visitors continue to the main community feed.
     posts = Post.objects.filter(status='published').select_related('author', 'category')
 
     # ── Search ──
