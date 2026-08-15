@@ -61,6 +61,7 @@ cp .env.example .env
 - `DEBUG`
 - `ALLOWED_HOSTS`
 - `CSRF_TRUSTED_ORIGINS`
+- `SERVE_MEDIA_FILES`
 - `DATABASE_URL`
 - `EMAIL_HOST_USER`
 - `EMAIL_HOST_PASSWORD`
@@ -69,6 +70,8 @@ cp .env.example .env
 - `GOOGLE_CLIENT_SECRET`
 
 `ALLOW_DEMO_OTP_FALLBACK=True` is useful for portfolio/demo deployments where SMTP is blocked by the host. For a real production app, use a reliable email provider and set `ALLOW_DEMO_OTP_FALLBACK=False`.
+
+`SERVE_MEDIA_FILES=True` lets Railway serve uploaded images for a portfolio demo. For a real production app, use cloud storage such as S3 or Cloudinary.
 
 ## Run Tests
 

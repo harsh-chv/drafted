@@ -1,10 +1,11 @@
 """
-Root URL configuration for WriteSphere.
+Root URL configuration for Drafted.
 """
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
 from django.conf import settings
 from django.conf.urls.static import static
+from django.views.static import serve
 
 from django.views.generic.base import RedirectView
 from . import api
@@ -23,6 +24,9 @@ urlpatterns = [
     path('favicon.ico', RedirectView.as_view(url='/static/images/icon.png', permanent=True)),
 ]
 
-# Serve media files during development
-if settings.DEBUG:
+# Serve uploaded media locally and on portfolio/demo deployments.
+if settings.DEBUG or getattr(settings, 'SERVE_MEDIA_FILES', False):
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += [
+        re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
+    ]
