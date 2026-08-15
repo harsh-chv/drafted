@@ -165,6 +165,27 @@ class CoreFlowTests(TestCase):
                 self.assertEqual(self.reader.website, 'https://example.com')
                 self.assertTrue(self.reader.avatar.name.startswith('avatars/'))
 
+    def test_post_create_saves_cover_image(self):
+        self.client.force_login(self.reader)
+        cover_image = SimpleUploadedFile(
+            'cover.gif',
+            b'GIF87a\x01\x00\x01\x00\x80\x01\x00\x00\x00\x00\xff\xff\xff,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02L\x01\x00;',
+            content_type='image/gif',
+        )
+
+        with TemporaryDirectory() as media_root:
+            with override_settings(MEDIA_ROOT=media_root):
+                response = self.client.post(reverse('posts:create'), {
+                    'title': 'Post with image',
+                    'content': 'This post includes a cover image.',
+                    'tag_names': 'demo',
+                    'cover_image': cover_image,
+                })
+
+                self.assertEqual(response.status_code, 302)
+                post = Post.objects.get(title='Post with image')
+                self.assertTrue(post.cover_image.name.startswith('posts/covers/'))
+
     def test_comment_api_adds_comment(self):
         self.client.force_login(self.reader)
         response = self.client.post(

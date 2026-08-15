@@ -260,6 +260,10 @@ def profile_edit_view(request):
             form.save()
             messages.success(request, 'Profile updated successfully!')
             return redirect('users:profile', username=request.user.username)
+        for field, errors in form.errors.items():
+            for error in errors:
+                field_name = form.fields[field].label or field.replace('_', ' ').title() if field in form.fields else field
+                messages.error(request, f'{field_name}: {error}')
     else:
         form = UserUpdateForm(instance=request.user)
 

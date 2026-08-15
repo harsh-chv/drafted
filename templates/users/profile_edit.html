@@ -1,5 +1,7 @@
 ﻿{% extends 'base.html' %}
 
+{% load static %}
+
 {% block title %}Edit profile — Drafted{% endblock %}
 
 {% block content %}
@@ -28,9 +30,10 @@
 <div class="px-4 relative">
     <div class="absolute -top-16 left-4 w-[112px] h-[112px] rounded-full border-4 border-white dark:border-black bg-[#F7F9F9] dark:bg-[#16181C] overflow-hidden flex items-center justify-center cursor-pointer group">
         {% if user.avatar %}
-            <img src="{{ user.avatar.url }}" class="w-full h-full object-cover">
+            <img id="avatarPreview" src="{{ user.avatar.url }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='{% static 'images/image-placeholder.svg' %}';">
         {% else %}
-            <span class="text-4xl font-bold text-[#536471] dark:text-[#71767B]">{{ user.username|first|upper }}</span>
+            <img id="avatarPreview" src="" class="hidden w-full h-full object-cover" alt="">
+            <span id="avatarInitial" class="text-4xl font-bold text-[#536471] dark:text-[#71767B]">{{ user.username|first|upper }}</span>
         {% endif %}
         <div class="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
             <svg viewBox="0 0 24 24" class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
@@ -47,9 +50,10 @@
         <label class="block text-[13px] text-[#536471] dark:text-[#71767B] mb-2 font-medium">Profile photo</label>
         <label class="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-dashed border-[#CFD9DE] dark:border-[#333639] cursor-pointer hover:border-xblue hover:bg-[rgba(29,155,240,0.04)] transition-all text-[15px] text-[#536471] dark:text-[#71767B] w-fit">
             <svg viewBox="0 0 24 24" class="w-5 h-5 text-xblue" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-            Choose photo
-            <input type="file" name="avatar" accept="image/*" class="hidden">
+            <span id="avatarFileLabel">Choose photo</span>
+            <input type="file" name="avatar" accept="image/*" id="avatarInput" class="hidden">
         </label>
+        <p class="mt-2 text-[12px] text-[#536471] dark:text-[#71767B]">Max 5MB · JPG, PNG, WebP</p>
     </div>
 
     <!-- First Name -->
@@ -90,5 +94,44 @@
     </div>
     {% endif %}
 </form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var input = document.getElementById('avatarInput');
+    var preview = document.getElementById('avatarPreview');
+    var initial = document.getElementById('avatarInitial');
+    var label = document.getElementById('avatarFileLabel');
+
+    if (!input || !preview) {
+        return;
+    }
+
+    input.addEventListener('change', function () {
+        var file = this.files[0];
+        if (!file) {
+            return;
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+            alert('Profile photo must be under 5MB. Please choose a smaller image.');
+            this.value = '';
+            return;
+        }
+
+        var reader = new FileReader();
+        reader.onload = function (event) {
+            preview.src = event.target.result;
+            preview.classList.remove('hidden');
+            if (initial) {
+                initial.classList.add('hidden');
+            }
+        };
+        reader.readAsDataURL(file);
+        if (label) {
+            label.textContent = file.name.length > 24 ? file.name.substring(0, 21) + '...' : file.name;
+        }
+    });
+});
+</script>
 
 {% endblock %}
