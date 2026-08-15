@@ -62,6 +62,7 @@ cp .env.example .env
 - `ALLOWED_HOSTS`
 - `CSRF_TRUSTED_ORIGINS`
 - `SERVE_MEDIA_FILES`
+- `CLOUDINARY_URL`
 - `DATABASE_URL`
 - `EMAIL_HOST_USER`
 - `EMAIL_HOST_PASSWORD`
@@ -71,7 +72,9 @@ cp .env.example .env
 
 `ALLOW_DEMO_OTP_FALLBACK=True` is useful for portfolio/demo deployments where SMTP is blocked by the host. For a real production app, use a reliable email provider and set `ALLOW_DEMO_OTP_FALLBACK=False`.
 
-`SERVE_MEDIA_FILES=True` lets Railway serve uploaded images for a portfolio demo. For a real production app, use cloud storage such as S3 or Cloudinary.
+Set `CLOUDINARY_URL` on Railway to make uploaded post images persistent across redeploys. Without Cloudinary, Railway can lose uploaded media after redeploy because its filesystem is temporary.
+
+`SERVE_MEDIA_FILES=True` lets Django serve local uploaded images for a portfolio demo, but Cloudinary is the better fix for Railway.
 
 ## Run Tests
 
@@ -86,4 +89,5 @@ python manage.py test
 3. Set `DEBUG=False`.
 4. Set `ALLOWED_HOSTS` and `CSRF_TRUSTED_ORIGINS` for your Railway domain.
 5. Add `DATABASE_URL` if using a Railway database service.
-6. Deploy. The `Procfile` runs migrations before starting Gunicorn.
+6. Add `CLOUDINARY_URL` for persistent image uploads.
+7. Deploy. The `Procfile` runs migrations before starting Gunicorn.

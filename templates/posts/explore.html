@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load humanize %}
+{% load humanize static %}
 
 {% block title %}Explore — Drafted{% endblock %}
 
@@ -80,7 +80,7 @@
             <!-- Image -->
             {% if post.cover_image %}
             <div class="mb-2 rounded-xl overflow-hidden border border-[#EFF3F4] dark:border-[#2F3336]">
-                <img src="{{ post.cover_image.url }}" alt="{{ post.title }}" class="w-full block max-h-[220px] sm:max-h-[260px] object-cover" loading="lazy">
+                <img src="{{ post.cover_image.url }}" alt="{{ post.title }}" class="w-full block max-h-[220px] sm:max-h-[260px] object-cover" loading="lazy" onerror="this.onerror=null; this.src='{% static 'images/image-placeholder.svg' %}'; this.classList.remove('object-cover'); this.classList.add('object-contain');">
             </div>
             {% endif %}
 

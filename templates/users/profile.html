@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load humanize %}
+{% load humanize static %}
 
 {% block title %}{{ profile_user.username }} — Drafted{% endblock %}
 
@@ -221,7 +221,7 @@
                     <span class="text-[#536471] dark:text-[#71767B]">{{ post.content|truncatewords:30 }}</span>
                 </div>
                 {% if post.cover_image %}
-                <div class="mb-3 rounded-2xl overflow-hidden border border-[#EFF3F4] dark:border-[#2F3336]"><img src="{{ post.cover_image.url }}" class="w-full block" loading="lazy"></div>
+                <div class="mb-3 rounded-2xl overflow-hidden border border-[#EFF3F4] dark:border-[#2F3336]"><img src="{{ post.cover_image.url }}" class="w-full block" loading="lazy" onerror="this.onerror=null; this.src='{% static 'images/image-placeholder.svg' %}';"></div>
                 {% endif %}
                 <div class="flex gap-6 -ml-2 mt-1 items-center">
                     <span class="x-action-btn x-action-reply flex items-center gap-1.5" title="Replies">
@@ -314,7 +314,7 @@
                     <span class="text-[#536471] dark:text-[#71767B]">{{ like.post.content|truncatewords:25 }}</span>
                 </div>
                 {% if like.post.cover_image %}
-                <div class="mb-2 rounded-2xl overflow-hidden border border-[#EFF3F4] dark:border-[#2F3336]"><img src="{{ like.post.cover_image.url }}" class="w-full block" loading="lazy"></div>
+                <div class="mb-2 rounded-2xl overflow-hidden border border-[#EFF3F4] dark:border-[#2F3336]"><img src="{{ like.post.cover_image.url }}" class="w-full block" loading="lazy" onerror="this.onerror=null; this.src='{% static 'images/image-placeholder.svg' %}';"></div>
                 {% endif %}
                 <div class="flex gap-6 -ml-2 mt-1">
                     <span class="x-action-btn x-action-reply">

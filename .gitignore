@@ -25,8 +25,8 @@ build/
 # Static files (collected)
 staticfiles/
 
-# Media uploads
-media/
+# Media uploads (committed for demo deployment)
+# media/
 
 # IDE
 .vscode/
